@@ -18,7 +18,7 @@
  * Strings for component 'auth_magic', language 'en'.
  *
  * @package   auth_magic
- * @copyright  2022 bdecent gmbh <https://bdecent.de>
+ * @copyright  2023 bdecent gmbh <https://bdecent.de>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 $string['pluginname'] = 'Magic authentication';
@@ -73,7 +73,8 @@ $string['success'] = 'Changes updated';
 $string['error'] = 'Does not updated magic login link expiration time';
 $string['loginoption'] = "Login option";
 $string['loginoptiondesc'] = "Enable this setting to log in using the username provided in the login form.";
-$string['invitationmessage'] = 'Hi {$a->fullname},
+
+$string['loginlinkmessage'] = 'Hi {$a->fullname},
 
 to access your account on \'{$a->sitename}\', please use the following magic link:
 
@@ -84,7 +85,7 @@ If you need help, please contact the site administrator,
 
 
 
-$string['loginlinknmessage'] = 'Hi {$a->fullname},
+$string['invitationmessage'] = 'Hi {$a->fullname},
 
 A new account has been requested at \'{$a->sitename}\'
 using your email address.
@@ -131,16 +132,18 @@ $string['instructionsforlinktype'] = "Please provide a magic link type, the type
 $string['userhavenotlinks'] = 'User have not any {$a} link';
 
 $string['privacy:metadata:auth_magic_loginlinks'] = 'Magic links for the user.';
-$string['privacy:metadata:auth_magic_loginlinks:userid'] = 'The ID of the user with this login links';
-$string['privacy:metadata:auth_magic_loginlinks:parent'] = 'The value of the userid to assgin parent of the user.';
-$string['privacy:metadata:auth_magic_loginlinks:magicauth'] = 'The value of the assgin parent or not';
-$string['privacy:metadata:auth_magic_loginlinks:parentrole'] = 'The instance of the parent role id.';
-$string['privacy:metadata:auth_magic_loginlinks:loginuserkey'] = 'The value of the user login key';
-$string['privacy:metadata:auth_magic_loginlinks:invitationuserkey'] = 'The value of the user invitation key';
-$string['privacy:metadata:auth_magic_loginlinks:magiclogin'] = 'The value of the user magic login link';
-$string['privacy:metadata:auth_magic_loginlinks:magicinvitation'] = 'The value of the user magic invitation link';
-$string['privacy:metadata:auth_magic_loginlinks:loginexpiry'] = 'The date that the login key is valid until';
-$string['privacy:metadata:auth_magic_loginlinks:invitationexpiry'] = 'The date that the invitation key is valid until';
-$string['privacy:metadata:auth_magic_loginlinks:timecreated'] = 'The date and time that the login link was created.';
-$string['privacy:metadata:auth_magic_loginlinks:timemodified'] = 'The date and time that the login link was modified.';
+$string['privacy:metadata:auth_magic:userid'] = 'The ID of the user with this login links';
+$string['privacy:metadata:auth_magic:parent'] = 'The value of the userid to assign parent of the user.';
+$string['privacy:metadata:auth_magic:magicauth'] = 'The value of whether parent assigns or not.';
+$string['privacy:metadata:auth_magic:parentrole'] = 'The instance of the parent role id.';
+$string['privacy:metadata:auth_magic:loginuserkey'] = 'The value of the user login key';
+$string['privacy:metadata:auth_magic:invitationuserkey'] = 'The value of the user invitation key';
+$string['privacy:metadata:auth_magic:magiclogin'] = 'The value of the user magic login link';
+$string['privacy:metadata:auth_magic:magicinvitation'] = 'The value of the user magic invitation link';
+$string['privacy:metadata:auth_magic:loginexpiry'] = 'The date that the login key is valid until';
+$string['privacy:metadata:auth_magic:invitationexpiry'] = 'The date that the invitation key is valid until';
+$string['privacy:metadata:auth_magic:manualexpiry'] = "The date that set the expiry to the user login key is valid until";
+$string['privacy:metadata:auth_magic:timecreated'] = 'The date and time that the login link was created.';
+$string['privacy:metadata:auth_magic:timemodified'] = 'The date and time that the login link was modified.';
 $string['privacy:metadata:auth_magic'] = 'Magic authentication';
+$string['messageprovider:auth_magic'] = 'Magic authentication login links';

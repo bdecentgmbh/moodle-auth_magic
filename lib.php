@@ -19,7 +19,7 @@
  *
  *
  * @package     auth_magic
- * @copyright   2022 bdecent gmbh <https://bdecent.de>
+ * @copyright   2023 bdecent gmbh <https://bdecent.de>
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -90,7 +90,7 @@ function auth_magic_sent_loginlink_touser($userid, $otherauth = false, $expired 
     if ($expired) {
         $messageplain = get_string('expiredloginlinkmsg', 'auth_magic', $data);
     } else {
-        $messageplain = get_string('loginlinknmessage', 'auth_magic', $data);
+        $messageplain = get_string('loginlinkmessage', 'auth_magic', $data);
     }
     $messagehtml = text_to_html($messageplain, false, false, true);
     $user->mailformat = 1;  // Always send HTML version as well.

@@ -15,10 +15,10 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Event observers supported by this plugin.
+ * Event observer for Magic authentication.
  *
  * @package    auth_magic
- * @copyright  2022 bdecent gmbh <https://bdecent.de>
+ * @copyright  2023 bdecent gmbh <https://bdecent.de>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 namespace auth_magic\event;
@@ -29,13 +29,9 @@ require_once($CFG->dirroot. "/auth/magic/auth.php");
 require_once($CFG->dirroot. "/auth/magic/lib.php");
 
 /**
- * Event observers supported by this plugin.
- *
- * @package    auth_magic
- * @copyright  2022 bdecent gmbh <https://bdecent.de>
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * Event observer for auth_magic.
  */
-class user_created_observer {
+class observer {
 
     /**
      * Create user data creation request when the user is created.
@@ -43,18 +39,54 @@ class user_created_observer {
      * @param \core\event\user_created $event
      */
     public static function created_user_data_request(\core\event\user_created $event) {
-
-        global $USER;
+        global $USER, $CFG;
         $userid = $event->objectid;
         $usercontext = \context_user::instance($userid);
         $user = \core_user::get_user($userid);
         if ($user->auth == 'magic') {
             // Pro feature.
             if (auth_magic_has_pro()) {
-                // If check the parent role assign or not.
-                if ($roleid = get_config('auth_magic', 'owneraccountrole')) {
-                    role_assign($roleid, $USER->id, $usercontext->id);
-                }
+                require_once($CFG->dirroot."/local/magic/lib.php");
+                local_magic_parent_role_assign($USER->id, $usercontext->id);
+            }
+            $auth = get_auth_plugin('magic');
+            // Request login url.
+            $auth->create_magic_instance($user);
+        }
+        return true;
+    }
+
+    /**
+     * Create user data deletion request when the user is deleted.
+     *
+     * @param \core\event\user_deleted $event
+     *
+     * @return bool
+     */
+    public static function create_delete_data_request(\core\event\user_deleted $event) {
+        global $DB;
+        $userid = $event->objectid;
+        $DB->delete_records('auth_magic_loginlinks', array('userid' => $userid));
+        delete_user_key('auth/magic', $userid);
+        return true;
+    }
+
+    /**
+     * Create user data update request when the user is updated.
+     *
+     * @param \core\event\user_updated $event
+     *
+     * @return bool
+     */
+    public static function create_update_data_request(\core\event\user_updated $event) {
+        global $DB, $USER, $CFG;
+        $userid = $event->objectid;
+        $usercontext = \context_user::instance($userid);
+        $user = \core_user::get_user($userid);
+        if ($user->auth == 'magic') {
+            if (auth_magic_has_pro()) {
+                require_once($CFG->dirroot."/local/magic/lib.php");
+                local_magic_parent_role_assign($USER->id, $usercontext->id);
             }
             $auth = get_auth_plugin('magic');
             // Request login url.

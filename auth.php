@@ -18,7 +18,7 @@
  * Magic authentication login - Create magic links to login user.
  *
  * @package auth_magic
- * @copyright  2022 bdecent gmbh <https://bdecent.de>
+ * @copyright  2023 bdecent gmbh <https://bdecent.de>
  * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
  */
 
@@ -26,8 +26,9 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->libdir.'/authlib.php');
 require_once($CFG->dirroot."/auth/magic/lib.php");
+
 /**
- * Plugin for no authentication - disabled user.
+ * Magic authentication login.
  */
 class auth_plugin_magic extends auth_plugin_base {
 
@@ -37,16 +38,6 @@ class auth_plugin_magic extends auth_plugin_base {
      */
     public function __construct() {
         $this->authtype = 'magic';
-    }
-
-    /**
-     * Old syntax of class constructor. Deprecated in PHP7.
-     *
-     * @deprecated since Moodle 3.1
-     */
-    public function auth_plugin_magic() {
-        debugging('Use of class name as constructor is deprecated', DEBUG_DEVELOPER);
-        self::__construct();
     }
 
     /**
@@ -76,7 +67,7 @@ class auth_plugin_magic extends auth_plugin_base {
      */
     public function prevent_local_passwords() {
         // Just in case, we do not want to loose the passwords.
-        return false;
+        return true;
     }
 
     /**
@@ -86,7 +77,7 @@ class auth_plugin_magic extends auth_plugin_base {
      */
     public function is_internal() {
         // We do not know if it was internal or external originally.
-        return true;
+        return false;
     }
 
     /**
@@ -96,6 +87,16 @@ class auth_plugin_magic extends auth_plugin_base {
      */
     public function can_change_password() {
         return false;
+    }
+
+    /**
+     * Returns the URL for changing the user's pw, or empty if the default can
+     * be used.
+     *
+     * @return moodle_url
+     */
+    public function change_password_url() {
+        return null;
     }
 
     /**

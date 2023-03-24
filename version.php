@@ -18,12 +18,15 @@
  * Version information
  *
  * @package    auth_magic
- * @copyright  2022 bdecent gmbh <https://bdecent.de>
+ * @copyright  2023 bdecent gmbh <https://bdecent.de>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2023032100;        // The current plugin version (Date: YYYYMMDDXX).
+$plugin->version = 2023032404;        // The current plugin version (Date: YYYYMMDDXX).
 $plugin->requires = 2020060900;        // Requires this Moodle version.
 $plugin->component = 'auth_magic';    // Full name of the plugin (used for diagnostics).
+$plugin->release = 'v1.2';
+$plugin->maturity = MATURITY_RC;
+$plugin->supported = [39, 401];

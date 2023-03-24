@@ -18,7 +18,7 @@
  * This file defines observers needed by the plugin.
  *
  * @package    auth_magic
- * @copyright  2022 bdecent gmbh <https://bdecent.de>
+ * @copyright  2023 bdecent gmbh <https://bdecent.de>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 defined('MOODLE_INTERNAL') || die();
@@ -26,6 +26,14 @@ defined('MOODLE_INTERNAL') || die();
 $observers = [
     [
         'eventname' => '\core\event\user_created',
-        'callback' => '\auth_magic\event\user_created_observer::created_user_data_request',
+        'callback' => '\auth_magic\event\observer::created_user_data_request',
+    ],
+    [
+        'eventname' => '\core\event\user_deleted',
+        'callback' => '\auth_magic\event\observer::create_delete_data_request',
+    ],
+    [
+        'eventname' => '\core\event\user_updated',
+        'callback' => '\auth_magic\event\observer::create_update_data_request',
     ]
 ];
