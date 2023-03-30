@@ -18,7 +18,7 @@
  * Privacy implementation for Magic authentication.
  *
  * @package   auth_magic
- * @copyright bdecent GmbH 2021
+ * @copyright bdecent GmbH 2023
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -37,7 +37,7 @@ use core_privacy\local\request\transform;
 use core_privacy\local\request\writer;
 
 /**
- * The ltool_note modules data export and deletion options.
+ * The Magic authentication data export and deletion options.
  */
 class provider implements
     \core_privacy\local\metadata\provider,

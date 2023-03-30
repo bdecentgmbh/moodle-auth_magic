@@ -21,7 +21,7 @@ Feature: Login to user for magic authentication.
     And I should see "Get a magic link via email"
     When I set the field "Username" to "user_01@gmail.com"
     And I click on "Get a magic link via email" "link"
-    Then I should see "if the email address belongs to an account that supports login via link, a link has been sent via email."
+    Then I should see "If you supplied a correct email address, an email containing a magic login link should have been sent to you."
     Then I set the field "Username" to "user_10@gmail.com"
     And I click on "Get a magic link via email" "link"
     And I should see "Doesn't exist user email"

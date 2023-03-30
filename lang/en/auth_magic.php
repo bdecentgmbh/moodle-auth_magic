@@ -147,3 +147,5 @@ $string['privacy:metadata:auth_magic:timecreated'] = 'The date and time that the
 $string['privacy:metadata:auth_magic:timemodified'] = 'The date and time that the login link was modified.';
 $string['privacy:metadata:auth_magic'] = 'Magic authentication';
 $string['messageprovider:auth_magic'] = 'Magic authentication login links';
+$string['firstname'] = "First name";
+$string['lastname'] = "Last name";

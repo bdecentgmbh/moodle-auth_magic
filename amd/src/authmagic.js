@@ -68,23 +68,23 @@ function(String) {
                     params.linkbtnpos = 0;
                 }
                 if (params.linkbtnpos == 0) {
-                    var getMagicLinkBlock = document.querySelectorAll("#page-login-index form#login .form-group")[params.linkbtnpos];
-                    if (getMagicLinkBlock) {
-                        getMagicLinkBlock.appendChild(getMagicLink);
+                    var MagicLinkBlock = document.querySelectorAll("#page-login-index form#login .form-group")[params.linkbtnpos];
+                    if (MagicLinkBlock) {
+                        MagicLinkBlock.appendChild(getMagicLink);
                         // Create a span.
                         var span = document.createElement("span");
                         span.setAttribute("class", "magic-password-instruction");
                         var passInfo = String.get_string('passinfo', 'auth_magic');
-                        $.when(passInfo).done(function(localizedEditString) {
+                        passInfo.done(function(localizedEditString) {
                             span.innerHTML = localizedEditString;
                         });
-                        getMagicLinkBlock.appendChild(span);
+                        MagicLinkBlock.appendChild(span);
                     }
                 }
                 if (params.linkbtnpos == 1) {
-                    var getMagicLinkBlock = document.querySelectorAll("#page-login-index form#login .form-group")[params.linkbtnpos];
-                    if (getMagicLinkBlock) {
-                        getMagicLinkBlock.appendChild(getMagicLink);
+                    var MagicLinkBlock = document.querySelectorAll("#page-login-index form#login .form-group")[params.linkbtnpos];
+                    if (MagicLinkBlock) {
+                        MagicLinkBlock.appendChild(getMagicLink);
                     }
                 }
 
