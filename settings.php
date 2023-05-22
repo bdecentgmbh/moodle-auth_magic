@@ -27,12 +27,18 @@ require_once($CFG->dirroot."/auth/magic/lib.php");
 
 if ($ADMIN->fulltree) {
 
-     // Magic login link expiry.
-     $name = "auth_magic/invitationexpiry";
-     $title = get_string("invitationexpiry", "auth_magic");
-     $desc = "";
-     $setting = new admin_setting_configduration($name, $title, $desc, 1 * WEEKSECS);
-     $settings->add($setting);
+    // Support password.
+    $name = "auth_magic/supportpassword";
+    $title = get_string("strsupportpassword", "auth_magic");
+    $setting = new admin_setting_configcheckbox($name, $title, "", 0);
+    $settings->add($setting);
+
+    // Magic login link expiry.
+    $name = "auth_magic/invitationexpiry";
+    $title = get_string("invitationexpiry", "auth_magic");
+    $desc = "";
+    $setting = new admin_setting_configduration($name, $title, $desc, 1 * WEEKSECS);
+    $settings->add($setting);
 
     // Magic login link expiry.
     $name = "auth_magic/loginexpiry";
