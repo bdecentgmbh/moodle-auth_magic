@@ -252,3 +252,6 @@ $string['signupsuccess'] = "User signup successfully.";
 $string['strsupportpassword'] = "Supports password";
 $string['strsignup'] = 'Sign up';
 $string['auth_emailnoemail'] = 'Tried to send you an email but failed!';
+$string['strprofilefield:'] = 'Profile Field: {$a}';
+$string['strcampaigns'] = "Campaigns";
+$string['strviewcampaign'] = "View Campaign";
