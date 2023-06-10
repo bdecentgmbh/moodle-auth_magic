@@ -47,7 +47,7 @@ class auth_plugin_magic extends auth_plugin_base {
      * @param string $password The password
      */
     public function user_login($username, $password) {
-        return false;
+        return get_config('auth_magic', 'supportpassword');
     }
 
     /**
@@ -55,8 +55,8 @@ class auth_plugin_magic extends auth_plugin_base {
      *
      * @return bool
      */
-    function can_signup() {
-        //override if needed
+    public function can_signup() {
+        // Override if needed.
         return true;
     }
 
@@ -67,7 +67,7 @@ class auth_plugin_magic extends auth_plugin_base {
      * @param object $user new user object
      * @param boolean $notify print notice with link and terminate
      */
-    function user_signup($user, $notify=true) {
+    public function user_signup($user, $notify=true) {
         // Standard signup, without custom confirmatinurl.
         return $this->magic_user_signup($user, $notify);
     }
@@ -78,7 +78,7 @@ class auth_plugin_magic extends auth_plugin_base {
      * @param string $username
      * @param string $confirmsecret
      */
-    function user_confirm($username, $confirmsecret) {
+    public function user_confirm($username, $confirmsecret) {
         global $DB, $SESSION;
         $user = get_complete_user_data('username', $username);
 
@@ -89,8 +89,8 @@ class auth_plugin_magic extends auth_plugin_base {
             } else if ($user->secret === $confirmsecret && $user->confirmed) {
                 return AUTH_CONFIRM_ALREADY;
 
-            } else if ($user->secret === $confirmsecret) {   // They have provided the secret key to get in
-                $DB->set_field("user", "confirmed", 1, array("id"=>$user->id));
+            } else if ($user->secret === $confirmsecret) {   // They have provided the secret key to get in.
+                $DB->set_field("user", "confirmed", 1, array("id" => $user->id));
 
                 if ($wantsurl = get_user_preferences('auth_magic_wantsurl', false, $user)) {
                     // Ensure user gets returned to page they were trying to access before signing up.
@@ -113,7 +113,6 @@ class auth_plugin_magic extends auth_plugin_base {
      *
      * @param object $user new user object
      * @param boolean $notify print notice with link and terminate
-     * @param string $confirmationurl user confirmation URL
      * @return boolean true if everything well ok and $notify is set to true
      * @throws moodle_exception
      * @since Moodle 3.2
@@ -139,7 +138,6 @@ class auth_plugin_magic extends auth_plugin_base {
         if (!empty($SESSION->wantsurl)) {
             set_user_preference('auth_magic_wantsurl', $SESSION->wantsurl, $user);
         }
-
         // Trigger event.
         \core\event\user_created::create_from_userid($user->id)->trigger();
 
@@ -151,7 +149,7 @@ class auth_plugin_magic extends auth_plugin_base {
      *
      * @return bool
      */
-    function can_confirm() {
+    public function can_confirm() {
         return true;
     }
 
@@ -163,6 +161,13 @@ class auth_plugin_magic extends auth_plugin_base {
      * @param string $newpassword The password
      */
     public function user_update_password($user, $newpassword) {
+        if (get_config('auth_magic', 'supportpassword')) {
+            $user = get_complete_user_data('id', $user->id);
+            // This will also update the stored hash to the latest algorithm
+            // if the existing hash is using an out-of-date algorithm (or the
+            // legacy md5 algorithm).
+            return update_internal_user_password($user, $newpassword);
+        }
         return false;
     }
 
@@ -173,7 +178,7 @@ class auth_plugin_magic extends auth_plugin_base {
      */
     public function prevent_local_passwords() {
         // Just in case, we do not want to loose the passwords.
-        return true;
+        return !get_config('auth_magic', 'supportpassword');
     }
 
     /**
@@ -183,7 +188,7 @@ class auth_plugin_magic extends auth_plugin_base {
      */
     public function is_internal() {
         // We do not know if it was internal or external originally.
-        return false;
+        return true;
     }
 
     /**
@@ -192,7 +197,7 @@ class auth_plugin_magic extends auth_plugin_base {
      * @return bool
      */
     public function can_change_password() {
-        return false;
+        return get_config('auth_magic', 'supportpassword');
     }
 
     /**
@@ -209,7 +214,7 @@ class auth_plugin_magic extends auth_plugin_base {
      * No password resetting.
      */
     public function can_reset_password() {
-        return false;
+        return get_config('auth_magic', 'supportpassword');
     }
 
     /**
@@ -221,32 +226,6 @@ class auth_plugin_magic extends auth_plugin_base {
         return true;
     }
 
-    /**
-     * Returns information on how the specified user can change their password.
-     * User accounts with authentication type set to magic are disabled accounts.
-     * They cannot change their password.
-     *
-     * @param stdClass $user A user object
-     * @return string[] An array of strings with keys subject and message
-     */
-    public function get_password_change_info(stdClass $user) : array {
-        $site = get_site();
-
-        $data = new stdClass();
-        $data->firstname = $user->firstname;
-        $data->lastname = $user->lastname;
-        $data->username = $user->username;
-        $data->sitename = format_string($site->fullname);
-        $data->admin = generate_email_signoff();
-
-        $message = get_string('emailpasswordchangeinfodisabled', '', $data);
-        $subject = get_string('emailpasswordchangeinfosubject', '', format_string($site->fullname));
-
-        return [
-            'subject' => $subject,
-            'message' => $message
-        ];
-    }
 
     /**
      * Create key for a specific user.

@@ -27,29 +27,35 @@ use block_mockblock\search\area;
 require_once(__DIR__.'/../../config.php');
 require_once($CFG->dirroot."/auth/magic/lib.php");
 
+if (auth_magic_has_pro()) {
+    require_once($CFG->dirroot."/local/magic/lib.php");
+}
+
 if (!is_enabled_auth('magic')) {
     throw new moodle_exception(get_string('pluginisdisabled', 'auth_magic'));
 }
 $PAGE->set_context(context_system::instance());
 $PAGE->set_url('/auth/magic/login.php');
 $magiclogin = optional_param('magiclogin', 0, PARAM_INT);
+$signupuser = optional_param('register', false, PARAM_BOOL);
+
 // Ajax using sent login link via email.
 if ($magiclogin) {
     $errormsg = '';
     $uservalue = optional_param('uservalue', '', PARAM_RAW_TRIMMED);
     $email = $uservalue;
-
     // Pro plugin feature.
     if (auth_magic_has_pro()) {
         // If the Pro plugin feature for login link via email or use username.
         $loginoption = get_config('auth_magic', 'loginoption');
+        if ($user = $DB->get_record('user', array('email' => $uservalue))) {
+            $email = $user->email;
+            $usermessage = get_string('sentlinktouser', 'auth_magic');
+        }
         if ($loginoption == true) {
             if ($user = $DB->get_record('user', array('username' => $uservalue))) {
                 $email = $user->email;
                 $usermessage = get_string('sentlinktousername', 'auth_magic');
-            } else if ($user = $DB->get_record('user', array('email' => $uservalue))) {
-                $email = $user->email;
-                $usermessage = get_string('sentlinktouser', 'auth_magic');
             }
         }
     }
@@ -65,7 +71,12 @@ if ($magiclogin) {
         );
         // If there are other user(s) that already have the same email, show an error.
         if (!$DB->record_exists_select('user', $select, $params)) {
-            $errormsg = get_string('emailnotexists', 'auth_magic');
+            if (auth_magic_has_pro() && get_config('local_magic', 'autocreateusers')) {
+                // Signup new user using magic.
+                local_magic_user_signup_request($email);
+            } else {
+                $errormsg = get_string('emailnotexists', 'auth_magic');
+            }
         }
     }
 
@@ -84,10 +95,8 @@ if ($magiclogin) {
                     // Pro plugin feature.
                     if (auth_magic_has_pro()) {
                         // Check the login option is enabled.
-                        if ($loginoption == true) {
-                            redirect(new moodle_url('/login/index.php'),  $usermessage,
-                             null, \core\output\notification::NOTIFY_SUCCESS);
-                        }
+                        redirect(new moodle_url('/login/index.php'),  $usermessage,
+                            null, \core\output\notification::NOTIFY_SUCCESS);
                     }
                     redirect(new moodle_url('/login/index.php'), get_string('sentlinktouser', 'auth_magic'),
                         null, \core\output\notification::NOTIFY_SUCCESS);
@@ -105,7 +114,6 @@ if ($magiclogin) {
 
 $auth = get_auth_plugin('magic');
 $keyvalue = required_param('key', PARAM_ALPHANUM);
-
 // Pro plugin feature.
 if (auth_magic_has_pro()) {
     // If pass the url parameter the page should be redirect that url.
@@ -122,6 +130,11 @@ if (isset($SESSION->wantsurl)) {
     $redirecturl = $SESSION->wantsurl;
 } else {
     $redirecturl = $CFG->wwwroot;
+}
+
+// If user want to signup.
+if ($signupuser && auth_magic_has_pro()) {
+    return local_magic_signup_user($keyvalue);
 }
 
 // Check key is expired or not.

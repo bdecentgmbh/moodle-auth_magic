@@ -94,7 +94,8 @@ function auth_magic_sent_loginlink_touser($userid, $otherauth = false, $expired 
     }
     $messagehtml = text_to_html($messageplain, false, false, true);
     $user->mailformat = 1;  // Always send HTML version as well.
-    return auth_magic_messagetouser($user, $subject, $messageplain, $messagehtml);
+    auth_magic_messagetouser($user, $subject, $messageplain, $messagehtml);
+    return true;
 
 }
 

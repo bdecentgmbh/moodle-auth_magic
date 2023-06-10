@@ -59,7 +59,7 @@ class auth_magic_test extends \advanced_testcase {
         $user->username = 'user';
         $user->password = 'pass';
         $this->generator->create_user($user);
-        $this->assertFalse($this->auth->user_login('user', 'pass'));
+        $this->assertTrue(!$this->auth->user_login('user', 'pass'));
     }
 
     /**

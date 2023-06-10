@@ -45,7 +45,7 @@ class observer {
         $user = \core_user::get_user($userid);
         if ($user->auth == 'magic') {
             // Pro feature.
-            if (auth_magic_has_pro()) {
+            if (auth_magic_has_pro() && isloggedin()) {
                 require_once($CFG->dirroot."/local/magic/lib.php");
                 local_magic_parent_role_assign($USER->id, $usercontext->id);
             }

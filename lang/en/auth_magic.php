@@ -64,10 +64,12 @@ $string['createuserenrolcourse'] = 'has been created and enrolled into "{$a}"';
 $string['existuserenrolcourse'] = 'has been enrolled into "{$a}"';
 $string['statuscreateuser'] = 'has been created';
 $string['sentlinktouser'] = "If you supplied a correct email address, an email containing a magic login link should have been sent to you.";
+$string['sentregisterlinktouser'] = "If you supplied a correct email address, an email containing a registration link should have been sent to you.";
 $string['sentlinktousername'] = "If you supplied a correct username, an email containing a magic login link should have been sent to your email address.";
 $string['preventmagicauthsubject'] = "Magic authentication support information";
 $string['invitationexpiryloginlink'] = "The invitation link has expired. If the email address belongs to an account that supports login via link, a link has been sent via email";
 $string['loginexpiryloginlink'] = "The magic login link has expired. A new magic login link has been sent to your email address.";
+$string['registrationexpirylink'] = "The registration link has expired. A new registration link has been sent to your email address.";
 $string['linkexpirytime'] = 'Set a magic login link expiry time';
 $string['success'] = 'Changes updated';
 $string['error'] = 'Does not updated magic login link expiration time';
@@ -84,6 +86,22 @@ If you need help, please contact the site administrator,
 {$a->admin}';
 
 
+$string['registrationmessage'] = 'Hi {$a->emailplaceholder},
+
+Thank you for your interest in joining {$a->sitename}! To create your account, please use the following registration link:
+
+<a href={$a->link}> {$a->link} </a> <br>
+
+If you have any questions or need assistance, please don\'t hesitate to contact the site administrator, {$a->admin}.
+
+We look forward to having you as a member of our community!
+
+Best regards,
+The {$a->sitename} Team';
+
+$string['registrationsubject'] = "Magic authentication Registration link";
+
+
 
 $string['invitationmessage'] = 'Hi {$a->fullname},
 
@@ -96,6 +114,18 @@ To login your new account, please go to this web address login directly instead 
 
 If you need help, please contact the site administrator,
 {$a->admin}';
+
+$string['expiredregistrationmessage'] = 'Hi {$a->fullname},
+
+you have tried to access \'{$a->sitename}\' with an expired registration link.
+
+A new magic link was automatically created for you:
+
+<a href=\'{$a->link}\'> {$a->link} </a> <br>
+
+If you need help, please contact the site administrator,
+{$a->admin}';
+
 
 $string['expiredloginlinkmsg'] = 'Hi {$a->fullname},
 
@@ -149,7 +179,7 @@ $string['privacy:metadata:auth_magic'] = 'Magic authentication';
 $string['messageprovider:auth_magic'] = 'Magic authentication login links';
 $string['firstname'] = "First name";
 $string['lastname'] = "Last name";
-// Campaign settings:
+// Campaign settings.
 $string['generalsettings'] = 'General settings';
 $string['strcampaignownerrole'] = 'Campaign owner role';
 $string['strcampaignownerrole_desc'] = 'Add a campaign owner role for magic campaigns';
@@ -157,6 +187,7 @@ $string['managecampaign'] = 'Manage campaign';
 $string['createcampaign'] = 'Create campaign';
 $string['campaigns:generalsection'] = 'Genaral settings';
 $string['campaigns:title'] = 'Title';
+$string['campaigns:description'] = 'Description';
 $string['campaigns:comments'] = 'Comments';
 $string['campaigns:availabilitysection'] = 'Availability';
 $string['campaigns:capacity'] = 'Capacity';
@@ -212,7 +243,7 @@ $string['campaigns:required'] = 'Required';
 $string['campaigns:optional'] = 'Optional';
 $string['campaigns:hiddentype1'] = 'Hidden(use provided text)';
 $string['campaigns:hiddentype2'] = 'Hidden(use default)';
-$string['campaigns:hiddentype3'] = 'Hidden(use other field\'s value';
+$string['campaigns:hiddentype3'] = 'Hidden(use other field\'s value)';
 $string['campaigns:hidden'] = 'Hidden';
 $string['disabled'] = 'Disabled';
 $string['campaigns:title'] = 'Title';
@@ -255,3 +286,45 @@ $string['auth_emailnoemail'] = 'Tried to send you an email but failed!';
 $string['strprofilefield:'] = 'Profile Field: {$a}';
 $string['strcampaigns'] = "Campaigns";
 $string['strviewcampaign'] = "View Campaign";
+$string['strmagicsignup'] = "Magic Sign Up";
+$string['strautocreateusers'] = "Auto create users";
+$string['strautocreateusers_desc'] = "If enabled, visitors will be able to register using a magic registration link to the site, if the email matches the list of allowed email domains and/or does not match the list of denied email domains. The account will be created when the user clicks on the registration link in their inbox. Before they can access the site, they need to fill in mandatory profile fields like their name and potentially other fields that are required on this site, as well as consent to any existing privacy policy.";
+$string['campaigns:title_help'] = 'The title name for your campaign.';
+$string['campaigns:description_help'] = 'This description will be displayed on the sign-up page.';
+$string['campaigns:comments_help'] = 'These comments are only visible to campaign owners and managers and are not accessible to regular participants or users.';
+$string['campaigns:capacity_help'] = 'How many users can use the campaign to sign up.Leave empty or set to 0 for unlimited.';
+$string['campaigns:status_help'] = 'Wether this campaign is available or archived. Archived campaigns cannot be used to sign up, even if there is still capacity. They are no longer visible to the campaign owner.';
+$string['campaigns:visibility_help'] = 'This campaign is visible for guests.';
+$string['campaigns:start_from_help'] = 'When this campaign opens.';
+$string['campaigns:end_from_help'] = 'When this campaign closes.';
+$string['campaigns:password_help'] = 'Secure your campaign using a password.';
+$string['campaigns:logo_help'] = 'Campaign logo.';
+$string['campaigns:headerimg_help'] = 'Header image height depends on the image you upload.';
+$string['campaigns:backgroundimg_help'] = 'Background image for signup page.';
+$string['campaigns:transform_help'] = 'If you enable this setting, the form will have a transparent appearance.';
+$string['campaigns:ownerprofile_help'] = 'Displays the campaign owner\'s profile picture above the campaign form';
+$string['campaigns:formposition_help'] = 'Define where the form shall be placed in the sign up page.';
+$string['campaigns:cohorts_help'] = 'Automatically adding users to specific cohorts within your campaign.';
+$string['campaigns:globalrole_help'] = 'Assign a specific role automatically to users upon sign-up.';
+$string['campaigns:campaignowner_help'] = 'Specify the user account that should be automatically assigned as the campaign owner.';
+$string['campaigns:privacypolicy_help'] = 'IF enable users to give their consent to the privacy policies by showing a consent statement on the campaign page.';
+$string['campaigns:consentstatement_help'] = 'When the "Display consent option" is enabled, the consent statement will be shown on the campaign page.';
+$string['campaigns:welcomemessage_help'] = 'When enabled, automatically send a welcome message to users who create new accounts for the campaign.';
+$string['campaigns:welcomemessagecontent_help'] = 'Content for the welcome message. Password placeholder will only work if the global setting "Support passwords" in auth_magic is set.';
+$string['campaigns:welcomemessageowner_help'] = 'CC the campaign owner (if set) when sending the welcome message.';
+$string['campaigns:followupmessage_help'] = 'When enabled, sent to follow-up message for new users.';
+$string['campaigns:messagedelay_help'] = 'Specify the number of days to wait before sending a follow-up message';
+$string['campaigns:followupmessagecontent_help'] = 'Content for the follow-up message. Password placeholder will only work if the global setting "Support passwords" in auth_magic is set.';
+$string['campaigns:followupmessageowner_help'] = 'CC the campaign owner (if set) when sending the follow-up message';
+$string['privilegedrole'] = 'Privileged role';
+$string['teacherrole'] = 'Teacher';
+$string['noneditteacherrole'] = 'Non-editing teacher';
+$string['managerrole'] = 'Manager';
+$string['strsignsite'] = 'Sign in to {$a}';
+$string['loginfooter'] = "Login footer links";
+$string['loginfooter_desc'] = 'Enter the content/links on the "Login footer" block. A URL is separated by pipe characters followed by the link text.';
+$string['loginfooterdefault'] = 'Imprint |#
+Terms & Conditions |#
+Login instructions |#
+Admin login|#';
+$string['strsignin'] = "Sign In";
