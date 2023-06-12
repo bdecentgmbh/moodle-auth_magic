@@ -121,7 +121,7 @@ class auth_plugin_magic extends auth_plugin_base {
         global $CFG, $DB, $SESSION, $PAGE, $OUTPUT;
         require_once($CFG->dirroot.'/user/profile/lib.php');
         require_once($CFG->dirroot.'/user/lib.php');
-        if (get_config('auth_magic', 'supportpassword')) {
+        if (get_config('auth_magic', 'supportpassword') && isset($user->password)) {
             $plainpassword = $user->password;
             $user->password = hash_internal_user_password($user->password);
         }
