@@ -241,9 +241,9 @@ $string['campaigns:pointoffirstcontact'] = 'Point of first contact';
 $string['campaigns:typeofaccount'] = 'Type of account';
 $string['campaigns:required'] = 'Required';
 $string['campaigns:optional'] = 'Optional';
-$string['campaigns:hiddentype1'] = 'Hidden(use provided text)';
-$string['campaigns:hiddentype2'] = 'Hidden(use default)';
-$string['campaigns:hiddentype3'] = 'Hidden(use other field\'s value)';
+$string['campaigns:hiddentype1'] = 'Hidden (use provided text)';
+$string['campaigns:hiddentype2'] = 'Hidden (use default)';
+$string['campaigns:hiddentype3'] = 'Hidden (use other field\'s value)';
 $string['campaigns:hidden'] = 'Hidden';
 $string['disabled'] = 'Disabled';
 $string['campaigns:title'] = 'Title';
@@ -289,33 +289,60 @@ $string['strviewcampaign'] = "View Campaign";
 $string['strmagicsignup'] = "Magic Sign Up";
 $string['strautocreateusers'] = "Auto create users";
 $string['strautocreateusers_desc'] = "If enabled, visitors will be able to register using a magic registration link to the site, if the email matches the list of allowed email domains and/or does not match the list of denied email domains. The account will be created when the user clicks on the registration link in their inbox. Before they can access the site, they need to fill in mandatory profile fields like their name and potentially other fields that are required on this site, as well as consent to any existing privacy policy.";
-$string['campaigns:title_help'] = 'The title name for your campaign.';
-$string['campaigns:description_help'] = 'This description will be displayed on the sign-up page.';
-$string['campaigns:comments_help'] = 'These comments are only visible to campaign owners and managers and are not accessible to regular participants or users.';
-$string['campaigns:capacity_help'] = 'How many users can use the campaign to sign up.Leave empty or set to 0 for unlimited.';
+$string['campaigns:title_help'] = 'Visible to the user.';
+$string['campaigns:description_help'] = 'Visible to the user.';
+$string['campaigns:comments_help'] = 'Only visible to campaign owners and campaign managers.';
+$string['campaigns:capacity_help'] = 'How many users can use the campaign to sign up. Leave empty or set to 0 for unlimited.';
 $string['campaigns:status_help'] = 'Wether this campaign is available or archived. Archived campaigns cannot be used to sign up, even if there is still capacity. They are no longer visible to the campaign owner.';
-$string['campaigns:visibility_help'] = 'This campaign is visible for guests.';
+$string['campaigns:visibility_help'] = 'Wether this campaign is visible for guests.';
 $string['campaigns:start_from_help'] = 'When this campaign opens.';
 $string['campaigns:end_from_help'] = 'When this campaign closes.';
-$string['campaigns:password_help'] = 'Secure your campaign using a password.';
-$string['campaigns:logo_help'] = 'Campaign logo.';
-$string['campaigns:headerimg_help'] = 'Header image height depends on the image you upload.';
-$string['campaigns:backgroundimg_help'] = 'Background image for signup page.';
-$string['campaigns:transform_help'] = 'If you enable this setting, the form will have a transparent appearance.';
-$string['campaigns:ownerprofile_help'] = 'Displays the campaign owner\'s profile picture above the campaign form';
+$string['campaigns:password_help'] = 'Secure your campaign using a password.
+
+This can either be entered by the user, or submitted as
+
+a parameter (use the link icon to copy the link with a token).';
+$string['campaigns:logo_help'] = "Will be displayed centered at the top of the page.
+
+It does not replace the site's logo (i.e. it is below the navbar)
+
+If you want the logo to align differently, add it to the description.";
+$string['campaigns:headerimg_help'] = 'Will be displayed below the navbar, full width.
+
+Height depends on the image you upload.';
+$string['campaigns:backgroundimg_help'] = 'Will be displayed below the header image if set,
+
+otherweise below the navbar.
+
+Width and height will be full.';
+$string['campaigns:transform_help'] = 'Wether to show a border/box shadow/background color for the form.';
+$string['campaigns:ownerprofile_help'] = 'Displays the campaign owner\'s profile picture above the campaign form.';
 $string['campaigns:formposition_help'] = 'Define where the form shall be placed in the sign up page.';
-$string['campaigns:cohorts_help'] = 'Automatically adding users to specific cohorts within your campaign.';
-$string['campaigns:globalrole_help'] = 'Assign a specific role automatically to users upon sign-up.';
-$string['campaigns:campaignowner_help'] = 'Specify the user account that should be automatically assigned as the campaign owner.';
+
+$string['campaigns:cohorts_help'] = 'Automatically add users to the following cohorts.';
+$string['campaigns:globalrole_help'] = 'Automatically assign the following role to a user.';
+$string['campaigns:campaignowner_help'] = 'Automatically assign the following user to the following account.';
 $string['campaigns:privacypolicy_help'] = 'IF enable users to give their consent to the privacy policies by showing a consent statement on the campaign page.';
-$string['campaigns:consentstatement_help'] = 'When the "Display consent option" is enabled, the consent statement will be shown on the campaign page.';
-$string['campaigns:welcomemessage_help'] = 'When enabled, automatically send a welcome message to users who create new accounts for the campaign.';
-$string['campaigns:welcomemessagecontent_help'] = 'Content for the welcome message. Password placeholder will only work if the global setting "Support passwords" in auth_magic is set.';
-$string['campaigns:welcomemessageowner_help'] = 'CC the campaign owner (if set) when sending the welcome message.';
+$string['campaigns:consentstatement_help'] = 'Will be displayed if "Display consent option" is enabled
+
+next to a checkbox, which, when ticked by the user will
+
+automatically set the consent to the privacy policies.';
+$string['campaigns:welcomemessage_help'] = 'When enabled, sent to new users.';
+$string['campaigns:welcomemessagecontent_help'] = 'You can use placeholders.
+
+Password placeholder will only work if the global setting
+
+"Support passwords" in auth_magic is set.';
+$string['campaigns:welcomemessageowner_help'] = 'Will CC the campaign owner (if set).';
 $string['campaigns:followupmessage_help'] = 'When enabled, sent to follow-up message for new users.';
-$string['campaigns:messagedelay_help'] = 'Specify the number of days to wait before sending a follow-up message';
-$string['campaigns:followupmessagecontent_help'] = 'Content for the follow-up message. Password placeholder will only work if the global setting "Support passwords" in auth_magic is set.';
-$string['campaigns:followupmessageowner_help'] = 'CC the campaign owner (if set) when sending the follow-up message';
+$string['campaigns:messagedelay_help'] = 'Send after the X days.';
+$string['campaigns:followupmessagecontent_help'] = 'You can use placeholders.
+
+Password placeholder will only work if the global setting
+
+"Support passwords" in auth_magic is set.';
+$string['campaigns:followupmessageowner_help'] = 'Will CC the campaign owner (if set).';
 $string['privilegedrole'] = 'Privileged role';
 $string['teacherrole'] = 'Teacher';
 $string['noneditteacherrole'] = 'Non-editing teacher';
@@ -328,3 +355,8 @@ Terms & Conditions |#
 Login instructions |#
 Admin login|#';
 $string['strsignin'] = "Sign In";
+$string['strstandardprofilefield_help'] = "Standard profile field";
+$string['strstandardprofilefield'] = "Standard profile field";
+$string['strcustomprofilefield'] = "Custom profile field";
+$string['strcustomprofilefield_help'] = "Custom profile field";
+$string['strenteryouremail'] = "enter your e-Mail address";

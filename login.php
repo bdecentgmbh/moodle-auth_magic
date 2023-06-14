@@ -73,7 +73,7 @@ if ($magiclogin) {
         if (!$DB->record_exists_select('user', $select, $params)) {
             if (auth_magic_has_pro() && get_config('local_magic', 'autocreateusers')) {
                 // Signup new user using magic.
-                local_magic_user_signup_request($email);
+                return local_magic_user_signup_request($email);
             } else {
                 $errormsg = get_string('emailnotexists', 'auth_magic');
             }

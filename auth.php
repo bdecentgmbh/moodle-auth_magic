@@ -47,7 +47,17 @@ class auth_plugin_magic extends auth_plugin_base {
      * @param string $password The password
      */
     public function user_login($username, $password) {
-        return get_config('auth_magic', 'supportpassword');
+        global $DB, $CFG;
+        if (!get_config('auth_magic', 'supportpassword')) {
+            return false;
+        }
+        if (!$user = $DB->get_record('user', array('username' => $username, 'mnethostid' => $CFG->mnet_localhost_id))) {
+            return false;
+        }
+        if (!validate_internal_user_password($user, $password)) {
+            return false;
+        }
+        return true;
     }
 
     /**
