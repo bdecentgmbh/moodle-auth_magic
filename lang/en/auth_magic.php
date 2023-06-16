@@ -360,3 +360,4 @@ $string['strstandardprofilefield'] = "Standard profile field";
 $string['strcustomprofilefield'] = "Custom profile field";
 $string['strcustomprofilefield_help'] = "Custom profile field";
 $string['strenteryouremail'] = "enter your e-Mail address";
+$string['none'] = "None";

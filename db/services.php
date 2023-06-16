@@ -15,18 +15,23 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version information
+ * Magic authentication plugin external functions and service definitions.
  *
- * @package    auth_magic
+ * @package auth_magic
  * @copyright  2023 bdecent gmbh <https://bdecent.de>
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2023061601;        // The current plugin version (Date: YYYYMMDDXX).
-$plugin->requires = 2020060900;        // Requires this Moodle version.
-$plugin->component = 'auth_magic';    // Full name of the plugin (used for diagnostics).
-$plugin->release = 'v1.1';
-$plugin->maturity = MATURITY_RC;
-$plugin->supported = [39, 402];
+$functions = array(
+    'auth_magic_get_magiclink_passcheck' => array(
+        'classname' => 'external',
+        'methodname' => 'get_magiclink_passcheck',
+        'classpath' => 'auth/magic/classes/external.php',
+        'description' => 'Check the get magic button passcheck',
+        'type' => 'write',
+        'ajax' => true,
+        'loginrequired' => false,
+    ),
+);

@@ -20,8 +20,8 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-define(['core/str'],
-function(String) {
+define(['core/str', 'core/ajax'],
+function(String, Ajax) {
 
     /**
     * Controls Custom styles tool action.
@@ -42,7 +42,7 @@ function(String) {
         var self = this;
         var MagicLink = self.getMagicLink(params, "#page-local-magic-login");
         if (MagicLink) {
-            self.magicLoginHandler(MagicLink, "form#login #id_email");
+            self.magicLoginHandler(MagicLink, "form#login #id_email", params);
         }
     };
 
@@ -122,13 +122,43 @@ function(String) {
             if (params.linkbtnpos == 2) {
                 MagicLink.classList.remove("btn-primary");
             }
-            self.magicLoginHandler(MagicLink, "form#login #username");
+            self.magicLoginHandler(MagicLink, "form#login #username", params);
         }
     };
 
-    AuthMagic.prototype.magicLoginHandler = function(MagicLink, mailHandler) {
+    AuthMagic.prototype.getMagicLinkPassCheck = function() {
+        var emailElement = document.querySelector("form.login-form input[name=email]");
+        var passwordElement = document.querySelector("form.login-form input[name=password]");
+        var status = false;
+        if (emailElement && passwordElement) {
+            var args = {
+                email : emailElement.value,
+                password : passwordElement.value,
+            };
+            Ajax.call([{
+                methodname: 'auth_magic_get_magiclink_passcheck',
+                args: args,
+                done: function(response) {
+                    status = response.status;
+                }
+            }], status);
+        }
+        return status;
+    };
+
+    AuthMagic.prototype.magicLoginHandler = function(MagicLink, mailHandler, params) {
+        var self = this;
         MagicLink.addEventListener("click", function(e) {
             e.preventDefault();
+            if (params.passcheck) {
+                // Wrong password condition give the redirect to the current data.
+                var loginformbutton = document.querySelector("form.login-form .magic-submit-action input");
+                loginformbutton.click();
+            }
+
+            if (params.passcheck && !self.getMagicLinkPassCheck()) {
+                return "";
+            }
             var returnurl = e.currentTarget.getAttribute("href");
             var userValue = "";
             //form#login #username

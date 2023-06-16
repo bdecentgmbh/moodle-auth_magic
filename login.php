@@ -95,21 +95,21 @@ if ($magiclogin) {
                     // Pro plugin feature.
                     if (auth_magic_has_pro()) {
                         // Check the login option is enabled.
-                        redirect(new moodle_url('/login/index.php'),  $usermessage,
+                        redirect(get_login_url(),  $usermessage,
                             null, \core\output\notification::NOTIFY_SUCCESS);
                     }
-                    redirect(new moodle_url('/login/index.php'), get_string('sentlinktouser', 'auth_magic'),
+                    redirect(get_login_url(), get_string('sentlinktouser', 'auth_magic'),
                         null, \core\output\notification::NOTIFY_SUCCESS);
                 }
             } else {
                 // Doesn't access the user for another auth method.
                 auth_magic_requiredmail_magic_authentication($user->id);
-                redirect(new moodle_url('/login/index.php'), get_string('sentlinktouser', 'auth_magic'),
+                redirect(get_login_url(), get_string('sentlinktouser', 'auth_magic'),
                     null, \core\output\notification::NOTIFY_SUCCESS);
             }
         }
     }
-    redirect(new moodle_url('/login/index.php'));
+    redirect(get_login_url());
 }
 
 $auth = get_auth_plugin('magic');
