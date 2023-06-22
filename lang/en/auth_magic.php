@@ -293,8 +293,8 @@ $string['campaigns:title_help'] = 'Visible to the user.';
 $string['campaigns:description_help'] = 'Visible to the user.';
 $string['campaigns:comments_help'] = 'Only visible to campaign owners and campaign managers.';
 $string['campaigns:capacity_help'] = 'How many users can use the campaign to sign up. Leave empty or set to 0 for unlimited.';
-$string['campaigns:status_help'] = 'Wether this campaign is available or archived. Archived campaigns cannot be used to sign up, even if there is still capacity. They are no longer visible to the campaign owner.';
-$string['campaigns:visibility_help'] = 'Wether this campaign is visible for guests.';
+$string['campaigns:status_help'] = 'whether this campaign is available or archived. Archived campaigns cannot be used to sign up, even if there is still capacity. They are no longer visible to the campaign owner.';
+$string['campaigns:visibility_help'] = 'whether this campaign is visible for guests.';
 $string['campaigns:start_from_help'] = 'When this campaign opens.';
 $string['campaigns:end_from_help'] = 'When this campaign closes.';
 $string['campaigns:password_help'] = 'Secure your campaign using a password.
@@ -315,7 +315,7 @@ $string['campaigns:backgroundimg_help'] = 'Will be displayed below the header im
 otherweise below the navbar.
 
 Width and height will be full.';
-$string['campaigns:transform_help'] = 'Wether to show a border/box shadow/background color for the form.';
+$string['campaigns:transform_help'] = 'whether to show a border/box shadow/background color for the form.';
 $string['campaigns:ownerprofile_help'] = 'Displays the campaign owner\'s profile picture above the campaign form.';
 $string['campaigns:formposition_help'] = 'Define where the form shall be placed in the sign up page.';
 
