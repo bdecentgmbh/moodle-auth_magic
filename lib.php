@@ -35,6 +35,28 @@ function auth_magic_get_user_login_link($userid) {
     return $DB->get_field('auth_magic_loginlinks', 'magiclogin', array('userid' => $userid), 'loginurl');
 }
 
+
+/**
+ * Get user login link expires.
+ * @param int $userid
+ * @return string time.
+ */
+function auth_magic_get_user_login_link_expires($userid) {
+    global $DB;
+    $expiry = $DB->get_field('auth_magic_loginlinks', 'loginexpiry',  array('userid' => $userid));
+    if ($expiry && $expiry > time()) {
+        $t = $expiry - time();
+        $hours = floor($t / 3600);
+        $minutes = floor(($t % 3600) / 60);
+        $seconds = $t % 60;
+        $strhours = get_string('hours');
+        $strmins = get_string('minutes');
+        $strseconds = get_string('seconds');
+        return sprintf("%02d $strhours %02d $strmins %02d $strseconds", $hours, $minutes, $seconds);
+    }
+    return get_string('currentlylinkexpiry', 'auth_magic');
+}
+
 /**
  * Send message to user using message api.
  *
@@ -47,9 +69,8 @@ function auth_magic_get_user_login_link($userid) {
  */
 function auth_magic_messagetouser($userto, $subject, $messageplain, $messagehtml, $courseid = null) {
     $eventdata = new \core\message\message();
-    $eventdata->name = 'auth_magic';
-    $eventdata->component = 'auth_magic';
-    $eventdata->modulename = 'moodle';
+    $eventdata->name = 'instantmessage';
+    $eventdata->component = 'moodle';
     $eventdata->courseid = empty($courseid) ? SITEID : $courseid;
     $eventdata->userfrom = core_user::get_support_user();
     $eventdata->userto = $userto;
@@ -87,6 +108,7 @@ function auth_magic_sent_loginlink_touser($userid, $otherauth = false, $expired 
     $data->admin = generate_email_signoff();
     $data->fullname = fullname($user);
     $data->link = $loginlink;
+    $data->expiry = auth_magic_get_user_login_link_expires($userid);
     if ($expired) {
         $messageplain = get_string('expiredloginlinkmsg', 'auth_magic', $data);
     } else {
@@ -121,13 +143,15 @@ function auth_magic_requiredmail_magic_authentication($userid) {
 }
 
 /**
- * Check if Magic Auth Pro is installed.
- *
- * @return bool
+ * Get magic email user.
+ * @param string $email
+ * @return stdclass user
  */
-function auth_magic_has_pro() {
-    if (array_key_exists('magic', core_component::get_plugin_list('local'))) {
-        return true;
+function auth_magic_get_email_user($email) {
+    global $DB;
+    $user = $DB->get_record('user', ['email' => $email]);
+    if (!$user && get_config('auth_magic', 'loginoption')) {
+        $user = $DB->get_record('user', array('username' => $email));
     }
-    return false;
+    return !empty($user) ? $user : null;
 }

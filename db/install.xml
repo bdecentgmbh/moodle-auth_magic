@@ -1,38 +1,24 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="auth/magic/db" VERSION="20220801" COMMENT="XMLDB file for Moodle auth/magic"
+<XMLDB PATH="auth/magic/db" VERSION="20230925" COMMENT="XMLDB file for Moodle auth/magic"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
   <TABLES>
-    <TABLE NAME="auth_magic_loginlinks" COMMENT="Store the all magic authentication user keys.">
+    <TABLE NAME="auth_magic_loginlinks" COMMENT="Store the all magic authentication user keys">
       <FIELDS>
-        <!-- Id for auth magic login links -->
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
-        <!-- Magic authentication users id -->
         <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
-        <!-- If check the user is parent -->
         <FIELD NAME="parent" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
-        <!-- Check the magic auth user -->
         <FIELD NAME="magicauth" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
-        <!-- Check any parent role for asignee in the user -->
         <FIELD NAME="parentrole" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
-        <!-- Magic login link user key instance -->
         <FIELD NAME="loginuserkey" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
-        <!-- Magic invitation link user key instance -->
         <FIELD NAME="invitationuserkey" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
-        <!-- Magic login link URL -->
         <FIELD NAME="magiclogin" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
-        <!-- Magic invitation link URL -->
         <FIELD NAME="magicinvitation" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
-        <!-- Globaly set a login link expiry time -->
         <FIELD NAME="loginexpiry" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
-        <!-- Manually set a magic login link expiry time -->
         <FIELD NAME="manualexpiry" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
-        <!-- Globaly set a invitation link expiry time -->
         <FIELD NAME="invitationexpiry" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
-        <!-- Created time for magic user -->
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
-        <!-- Modified time for magic links -->
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
       </FIELDS>
       <KEYS>

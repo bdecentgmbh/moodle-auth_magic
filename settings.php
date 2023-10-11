@@ -34,22 +34,46 @@ if ($ADMIN->fulltree) {
     $settings->add($setting);
 
     // Magic login link expiry.
-    $name = "auth_magic/invitationexpiry";
-    $title = get_string("invitationexpiry", "auth_magic");
-    $desc = "";
-    $setting = new admin_setting_configduration($name, $title, $desc, 1 * WEEKSECS);
-    $settings->add($setting);
-
-    // Magic login link expiry.
     $name = "auth_magic/loginexpiry";
     $title = get_string("loginexpiry", "auth_magic");
     $desc = "";
-    $setting = new admin_setting_configduration($name, $title, $desc, 4 * HOURSECS);
+    $setting = new admin_setting_configduration($name, $title, $desc, 10 * MINSECS);
     $settings->add($setting);
 
-    // Pro plugin feature settings.
-    if (auth_magic_has_pro()
-        && file_exists($CFG->dirroot."/local/magic/setting.php")) {
-        require_once($CFG->dirroot."/local/magic/setting.php");
-    }
+    // Magic invitation link expiry.
+    $name = "auth_magic/invitationexpiry";
+    $title = get_string("invitationexpiry", "auth_magic");
+    $desc = "";
+    $setting = new admin_setting_configduration($name, $title, $desc, 1 * HOURSECS);
+    $settings->add($setting);
+
+
+    // Magic invitation link expiry.
+    $name = "auth_magic/loginkeytype";
+    $title = get_string("loginkeytype", "auth_magic");
+    $desc = get_string("loginkeytype_desc", "auth_magic");
+    $options = [
+        'once' => get_string('keyuseonce', 'auth_magic'),
+        'more' => get_string('keyusemultiple', 'auth_magic')
+    ];
+    $setting = new admin_setting_configselect($name, $title, $desc, 'once', $options);
+    $settings->add($setting);
+
+    // Allow user to use username to login option.
+    $name = "auth_magic/loginoption";
+    $title = get_string("loginoption", "auth_magic");
+    $desc = get_string("loginoptiondesc", "auth_magic");
+    $setting = new admin_setting_configcheckbox($name, $title, $desc, 0);
+    $settings->add($setting);
+
+    // Supported authentication method.
+    $options = [
+        0 => get_string('magiconly', 'auth_magic'),
+        1 => get_string('anymethod', 'auth_magic'),
+    ];
+    $name = "auth_magic/authmethod";
+    $title = get_string("strsupportauth", "auth_magic");
+    $desc = "";
+    $setting = new admin_setting_configselect($name, $title, $desc, 0, $options);
+    $settings->add($setting);
 }

@@ -74,24 +74,6 @@ class auth_magic_test extends \advanced_testcase {
     }
 
     /**
-     * Test validate_key.
-     * @covers ::validate_key
-     */
-    public function test_validate_key() {
-        $suspenduser = $this->generator->create_user(['auth' => 'magic', 'suspended' => 1]);
-        $deleteuser = $this->generator->create_user(['auth' => 'magic', 'deleted' => 1]);
-        $user = $this->auth->create_user_key($this->user1->id, 0);
-        $suspenduserkey = $this->auth->create_user_key($suspenduser->id, 0);
-        $deleteuserkey = $this->auth->create_user_key($deleteuser->id, 0);
-        $user1key = $this->auth->create_user_key($this->user1->id, 0);
-        $user2key = $this->auth->create_user_key($this->user1->id, 1);
-        $this->assertFalse($this->auth->validate_key($suspenduserkey));
-        $this->assertFalse($this->auth->validate_key($deleteuserkey));
-        $this->assertEquals($user1key, $this->auth->validate_key($user1key)->value);
-        $this->assertFalse($this->auth->validate_key($user2key));
-    }
-
-    /**
      * Test user_delete_keys.
      * @covers ::user_delete_keys
      */

@@ -27,3 +27,23 @@ Feature: Login to user for magic authentication.
     And I should see "Doesn't exist user email"
     And I click on "Get a magic link via email" "link"
     And I should see "Invalid email address"
+
+  @javascript
+  Scenario: Check allow user to use username.
+    Given I am on homepage
+    And I expand navigation bar
+    And I click on "Log in" "link" in the ".logininfo" "css_element"
+    And I should see "Get a magic link via email"
+    When I set the field "Username" to "user_01"
+    And I click on "Get a magic link via email" "link"
+    And I should see "Invalid email address"
+    Then I log in as "admin"
+    And I navigate to "Plugins > Authentication > Magic authentication" in site administration
+    And I set the following fields to these values:
+      | Allow Username to get magic link | 1 |
+    Then I press "Save changes"
+    Then I log out
+    And I click on "Log in" "link" in the ".logininfo" "css_element"
+    Then I set the field "Username" to "user_01"
+    And I click on "Get a magic link via email" "link"
+    Then I should see "If you supplied a correct username, an email containing a magic login link should have been sent to your email address."

@@ -20,8 +20,7 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-define(['core/str', 'core/ajax'],
-function(String, Ajax) {
+define([], function() {
 
     /**
     * Controls Custom styles tool action.
@@ -32,19 +31,9 @@ function(String, Ajax) {
         if (params.loginhook) {
             self.magicLoginHook(params);
         }
-        if (params.customloginhook) {
-            self.magicCustomLoginHook(params);
-        }
         return true;
     };
 
-    AuthMagic.prototype.magicCustomLoginHook = function(params) {
-        var self = this;
-        var MagicLink = self.getMagicLink(params, "#page-local-magic-login");
-        if (MagicLink) {
-            self.magicLoginHandler(MagicLink, "form#login #id_email", params);
-        }
-    };
 
     AuthMagic.prototype.getMagicLink = function(params, linkId) {
         var authSelector = linkId + " .potentialidplist a[title=\"" + params.strbutton + "\"]";
@@ -72,93 +61,14 @@ function(String, Ajax) {
         var linkId = "#page-login-index";
         var MagicLink = self.getMagicLink(params, linkId);
         if (MagicLink) {
-            if (!document.querySelector("#page-login-index .potentialidplist")) {
-                MagicLink.classList.remove("btn-secondary");
-                MagicLink.classList.add("btn-primary");
-                potentialiDpList = document.querySelectorAll(linkId + " .login-identityproviders a");
-                potentialiDp = document.querySelectorAll(linkId + " .login-identityproviders h2")[0];
-            } else {
-                var potentialiDp = document.querySelector(linkId + " .potentialidplist");
-                if (potentialiDp) {
-                    potentialiDp = potentialiDp.previousElementSibling;
-                }
-                var potentialiDpList = document.querySelectorAll(linkId + " .potentialidplist .potentialidp");
-            }
-            if (!params.linkbtnpos) {
-                params.linkbtnpos = 0;
-            }
-            if (params.linkbtnpos == 0) {
-                var MagicLinkBlock = document.querySelectorAll("#page-login-index form#login .form-group")[params.linkbtnpos];
-                if (MagicLinkBlock) {
-                    MagicLinkBlock.appendChild(MagicLink);
-                    // Create a span.
-                    var span = document.createElement("span");
-                    span.setAttribute("class", "magic-password-instruction");
-                    var passInfo = String.get_string('passinfo', 'auth_magic');
-                    passInfo.done(function(localizedEditString) {
-                        span.innerHTML = localizedEditString;
-                    });
-                    MagicLinkBlock.appendChild(span);
-                }
-            }
-            if (params.linkbtnpos == 1) {
-                var MagicLinkBlock = document.querySelectorAll("#page-login-index form#login .form-group")[params.linkbtnpos];
-                if (MagicLinkBlock) {
-                    MagicLinkBlock.appendChild(MagicLink);
-                }
-            }
-
-            if (params.linkbtnpos <= 1 ) {
-                if (potentialiDpList.length <= 1) {
-                    potentialiDp.style.display = 'none';
-                    var identityProvider = document.querySelectorAll("#page-login-index .login-identityproviders")[0];
-                    if (identityProvider) {
-                        identityProvider.previousElementSibling.style.display = 'none';
-                        identityProvider.nextElementSibling.style.display = 'none';
-                    }
-                }
-            }
-
-            if (params.linkbtnpos == 2) {
-                MagicLink.classList.remove("btn-primary");
-            }
-            self.magicLoginHandler(MagicLink, "form#login #username", params);
+            self.magicLoginHandler(MagicLink, "form#login #username");
         }
     };
 
-    AuthMagic.prototype.getMagicLinkPassCheck = function() {
-        var emailElement = document.querySelector("form.login-form input[name=email]");
-        var passwordElement = document.querySelector("form.login-form input[name=password]");
-        var status = false;
-        if (emailElement && passwordElement) {
-            var args = {
-                email : emailElement.value,
-                password : passwordElement.value,
-            };
-            Ajax.call([{
-                methodname: 'auth_magic_get_magiclink_passcheck',
-                args: args,
-                done: function(response) {
-                    status = response.status;
-                }
-            }], status);
-        }
-        return status;
-    };
-
-    AuthMagic.prototype.magicLoginHandler = function(MagicLink, mailHandler, params) {
-        var self = this;
+    AuthMagic.prototype.magicLoginHandler = function(MagicLink, mailHandler) {
         MagicLink.addEventListener("click", function(e) {
             e.preventDefault();
-            if (params.passcheck) {
-                // Wrong password condition give the redirect to the current data.
-                var loginformbutton = document.querySelector("form.login-form .magic-submit-action input");
-                loginformbutton.click();
-            }
 
-            if (params.passcheck && !self.getMagicLinkPassCheck()) {
-                return "";
-            }
             var returnurl = e.currentTarget.getAttribute("href");
             var userValue = "";
             //form#login #username
@@ -166,6 +76,7 @@ function(String, Ajax) {
             if (mailSelector) {
                 userValue = mailSelector.value;
             }
+
             // Create a form.
             var form = document.createElement("form");
             form.setAttribute("method", "post");
@@ -192,6 +103,7 @@ function(String, Ajax) {
             magicForm.submit();
         });
     };
+
 
     return {
         init: function(params) {

@@ -44,11 +44,6 @@ class observer {
         $usercontext = \context_user::instance($userid);
         $user = \core_user::get_user($userid);
         if ($user->auth == 'magic') {
-            // Pro feature.
-            if (auth_magic_has_pro() && isloggedin()) {
-                require_once($CFG->dirroot."/local/magic/lib.php");
-                local_magic_parent_role_assign($USER->id, $usercontext->id);
-            }
             $auth = get_auth_plugin('magic');
             // Request login url.
             $auth->create_magic_instance($user);
@@ -84,10 +79,6 @@ class observer {
         $usercontext = \context_user::instance($userid);
         $user = \core_user::get_user($userid);
         if ($user->auth == 'magic') {
-            if (auth_magic_has_pro()) {
-                require_once($CFG->dirroot."/local/magic/lib.php");
-                local_magic_parent_role_assign($USER->id, $usercontext->id);
-            }
             $auth = get_auth_plugin('magic');
             // Request login url.
             $auth->create_magic_instance($user);
