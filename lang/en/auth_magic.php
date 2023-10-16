@@ -54,6 +54,13 @@ This link will expire on: <b> {$a->expiry} </b> <br>
 
 If you need help, please contact the site administrator,
 {$a->admin}';
+$string['notexists_loginlinkmsg'] = 'Hi {$a->fullname},
+
+You do not have a magic login link, so you don\'t have access to the site using the magic authentication.
+
+If you need help, please contact the site administrator,
+{$a->admin}';
+
 $string['pluginisdisabled'] = 'The magic authentication plugin is disabled.';
 $string['sentlinktouser'] = "If you supplied a correct email address, an email containing a magic login link should have been sent to you.";
 $string['sentlinktousername'] = "If you supplied a correct username, an email containing a magic login link should have been sent to your email address.";

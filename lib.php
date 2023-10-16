@@ -37,27 +37,6 @@ function auth_magic_get_user_login_link($userid) {
 
 
 /**
- * Get user login link expires.
- * @param int $userid
- * @return string time.
- */
-function auth_magic_get_user_login_link_expires($userid) {
-    global $DB;
-    $expiry = $DB->get_field('auth_magic_loginlinks', 'loginexpiry',  array('userid' => $userid));
-    if ($expiry && $expiry > time()) {
-        $t = $expiry - time();
-        $hours = floor($t / 3600);
-        $minutes = floor(($t % 3600) / 60);
-        $seconds = $t % 60;
-        $strhours = get_string('hours');
-        $strmins = get_string('minutes');
-        $strseconds = get_string('seconds');
-        return sprintf("%02d $strhours %02d $strmins %02d $strseconds", $hours, $minutes, $seconds);
-    }
-    return get_string('currentlylinkexpiry', 'auth_magic');
-}
-
-/**
  * Send message to user using message api.
  *
  * @param  mixed $userto
@@ -97,8 +76,8 @@ function auth_magic_messagetouser($userto, $subject, $messageplain, $messagehtml
 function auth_magic_sent_loginlink_touser($userid, $otherauth = false, $expired = false) {
     $site = get_site();
     $user = \core_user::get_user($userid);
+    $auth = get_auth_plugin('magic');
     if ($otherauth) {
-        $auth = get_auth_plugin('magic');
         $auth->create_magic_instance($user, false);
     }
     $loginlink = auth_magic_get_user_login_link($userid);
@@ -107,18 +86,58 @@ function auth_magic_sent_loginlink_touser($userid, $otherauth = false, $expired 
     $data->sitename = format_string($site->fullname);
     $data->admin = generate_email_signoff();
     $data->fullname = fullname($user);
-    $data->link = $loginlink;
-    $data->expiry = auth_magic_get_user_login_link_expires($userid);
-    if ($expired) {
-        $messageplain = get_string('expiredloginlinkmsg', 'auth_magic', $data);
+    if (get_config('auth_magic', 'loginkeytype') == 'more' && empty($loginlink)) {
+        $auth->create_magic_instance($user, false);
+        $loginlink = auth_magic_get_user_login_link($user->id);
+    }
+    if (!empty($loginlink)) {
+        $data->link = $loginlink;
+        $data->expiry = auth_magic_get_user_magic_link_expires($userid, 'loginexpiry');
+        if ($expired) {
+            $messageplain = get_string('expiredloginlinkmsg', 'auth_magic', $data);
+        } else {
+            $messageplain = get_string('loginlinkmessage', 'auth_magic', $data);
+        }
     } else {
-        $messageplain = get_string('loginlinkmessage', 'auth_magic', $data);
+        $messageplain = get_string('notexists_loginlinkmsg', 'auth_magic', $data);
     }
     $messagehtml = text_to_html($messageplain, false, false, true);
     $user->mailformat = 1;  // Always send HTML version as well.
     auth_magic_messagetouser($user, $subject, $messageplain, $messagehtml);
     return true;
 
+}
+
+
+/**
+ * Get user login link expires.
+ * @param int $userid
+ * @param string $type
+ * @return string time.
+ */
+function auth_magic_get_user_magic_link_expires($userid, $type) {
+    global $DB;
+    $expiry = $DB->get_field('auth_magic_loginlinks', $type,  array('userid' => $userid));
+    return $expiry ? auth_magic_expirytime_convert_datestring($expiry) : '';
+}
+
+/**
+ * Convert expirytime to date.
+ * @param int $expiry
+ * @return string value.
+ */
+function auth_magic_expirytime_convert_datestring($expiry) {
+    if ($expiry && $expiry > time()) {
+        $t = $expiry - time();
+        $hours = floor($t / 3600);
+        $minutes = floor(($t % 3600) / 60);
+        $seconds = $t % 60;
+        $strhours = get_string('hours');
+        $strmins = get_string('minutes');
+        $strseconds = get_string('seconds');
+        return sprintf("%02d $strhours %02d $strmins %02d $strseconds", $hours, $minutes, $seconds);
+    }
+    return get_string('currentlylinkexpiry', 'auth_magic');
 }
 
 /**

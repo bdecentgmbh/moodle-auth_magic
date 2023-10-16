@@ -106,6 +106,10 @@ if (isset($SESSION->wantsurl)) {
 $auth->check_userkey_type($keyvalue);
 
 $key = validate_user_key($keyvalue, 'auth/magic', null);
+if (get_config('auth_magic', 'loginkeytype') == 'once') {
+    delete_user_key('auth/magic', $key->userid);
+    $DB->delete_records('auth_magic_loginlinks', array('userid' => $key->userid));
+}
 if (isloggedin()) {
     if ($USER->id != $key->userid) {
         // Logout the current user if it's different to one that associated to the valid key.
