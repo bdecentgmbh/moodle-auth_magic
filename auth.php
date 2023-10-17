@@ -323,12 +323,9 @@ class auth_plugin_magic extends auth_plugin_base {
                 $relateduser = \core_user::get_user($instance->userid);
                 if (!$relateduser->suspended && !$relateduser->deleted) {
                     if ($relateduser->auth == 'magic' || $accessauthtoall) {
-                        $messagestr = get_string('loginexpiryloginlink', 'auth_magic');
-                        if (get_config('auth_magic', 'loginkeytype') == 'more') {
-                            $messagestr = get_string('loginexpiryloginlinkwithupdate', 'auth_magic');
-                            $this->update_new_loginkey($relateduser, $instance);
-                            auth_magic_sent_loginlink_touser($relateduser->id, false, true);
-                        }
+                        $messagestr = get_string('loginexpiryloginlinkwithupdate', 'auth_magic');
+                        $this->update_new_loginkey($relateduser, $instance);
+                        auth_magic_sent_loginlink_touser($relateduser->id, false, true);
                         // Give the response only for non-login user logged in
                         // User show the prompt to display the access different account.
                         if (!isloggedin()) {
@@ -345,17 +342,14 @@ class auth_plugin_magic extends auth_plugin_base {
                 $relateduser = \core_user::get_user($instance->userid);
                 if (!$relateduser->suspended && !$relateduser->deleted) {
                     if ($relateduser->auth == 'magic' || $accessauthtoall) {
-                        $messagestr = get_string('invitationexpiryloginlink', 'auth_magic');
-                        if (get_config('auth_magic', 'loginkeytype') == 'more') {
-                            // Exist login is expiry or not.
-                            if (!empty($instance->loginexpiry) && $instance->loginexpiry < time()) {
-                                $this->update_new_loginkey($relateduser, $instance);
-                            }
-                            $messagestr = get_string('invitationexpiryloginlinkwithupdate', 'auth_magic');
-                            auth_magic_sent_loginlink_touser($relateduser->id);
+                        // Exist login is expiry or not.
+                        if (!empty($instance->loginexpiry) && $instance->loginexpiry < time()) {
+                            $this->update_new_loginkey($relateduser, $instance);
                         }
-                         // Give the response only for non-login user logged in
-                         // user show the prompt to display the access different account.
+                        $messagestr = get_string('invitationexpiryloginlinkwithupdate', 'auth_magic');
+                        auth_magic_sent_loginlink_touser($relateduser->id);
+                        // Give the response only for non-login user logged in
+                        // user show the prompt to display the access different account.
                         if (!isloggedin()) {
                             redirect(new moodle_url('/login/index.php'), $messagestr,
                                 null, \core\output\notification::NOTIFY_INFO);

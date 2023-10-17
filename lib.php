@@ -74,6 +74,7 @@ function auth_magic_messagetouser($userto, $subject, $messageplain, $messagehtml
  * @return bool message status
  */
 function auth_magic_sent_loginlink_touser($userid, $otherauth = false, $expired = false) {
+    global $DB;
     $site = get_site();
     $user = \core_user::get_user($userid);
     $auth = get_auth_plugin('magic');
@@ -86,20 +87,23 @@ function auth_magic_sent_loginlink_touser($userid, $otherauth = false, $expired 
     $data->sitename = format_string($site->fullname);
     $data->admin = generate_email_signoff();
     $data->fullname = fullname($user);
-    if (get_config('auth_magic', 'loginkeytype') == 'more' && empty($loginlink)) {
+    if (empty($loginlink)) {
         $auth->create_magic_instance($user, false);
         $loginlink = auth_magic_get_user_login_link($user->id);
     }
-    if (!empty($loginlink)) {
-        $data->link = $loginlink;
-        $data->expiry = auth_magic_get_user_magic_link_expires($userid, 'loginexpiry');
-        if ($expired) {
-            $messageplain = get_string('expiredloginlinkmsg', 'auth_magic', $data);
-        } else {
-            $messageplain = get_string('loginlinkmessage', 'auth_magic', $data);
-        }
+    $data->link = $loginlink;
+    $data->expiry = auth_magic_get_user_magic_link_expires($userid, 'loginexpiry');
+    if ($expired) {
+        $messageplain = get_string('expiredloginlinkmsg', 'auth_magic', $data);
     } else {
-        $messageplain = get_string('notexists_loginlinkmsg', 'auth_magic', $data);
+        // Check link is expiry and more type.
+        $instance = $DB->get_record('auth_magic_loginlinks', array('userid' => $user->id));
+        if ($instance->loginexpiry < time()) {
+            $auth->update_new_loginkey($user, $instance);
+            auth_magic_sent_loginlink_touser($user->id, $otherauth);
+            return;
+        }
+        $messageplain = get_string('loginlinkmessage', 'auth_magic', $data);
     }
     $messagehtml = text_to_html($messageplain, false, false, true);
     $user->mailformat = 1;  // Always send HTML version as well.
