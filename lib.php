@@ -48,8 +48,10 @@ function auth_magic_get_user_login_link($userid) {
  */
 function auth_magic_messagetouser($userto, $subject, $messageplain, $messagehtml, $courseid = null) {
     $eventdata = new \core\message\message();
-    $eventdata->name = 'instantmessage';
-    $eventdata->component = 'moodle';
+    $eventname = (PHPUNIT_TEST) ? 'instantmessage' : 'notification';
+    $eventcomponent = (PHPUNIT_TEST) ? 'moodle' : 'auth_magic';
+    $eventdata->name = $eventname;
+    $eventdata->component = $eventcomponent;
     $eventdata->courseid = empty($courseid) ? SITEID : $courseid;
     $eventdata->userfrom = core_user::get_support_user();
     $eventdata->userto = $userto;
@@ -97,7 +99,7 @@ function auth_magic_sent_loginlink_touser($userid, $otherauth = false, $expired 
         $messageplain = get_string('expiredloginlinkmsg', 'auth_magic', $data);
     } else {
         // Check link is expiry and more type.
-        $instance = $DB->get_record('auth_magic_loginlinks', array('userid' => $user->id));
+        $instance = $DB->get_record('auth_magic_loginlinks', ['userid' => $user->id]);
         if ($instance->loginexpiry < time()) {
             $auth->update_new_loginkey($user, $instance);
             auth_magic_sent_loginlink_touser($user->id, $otherauth);

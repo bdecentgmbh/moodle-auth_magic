@@ -232,3 +232,4 @@ $string['privacy:metadata:auth_magic:timemodified'] = 'The date and time that th
 $string['privacy:metadata:auth_magic'] = 'Magic authentication';
 $string['messageprovider:auth_magic'] = 'Magic authentication login links';
 $string['strsupportauth'] = "Supported authentication method";
+$string['messageprovider:notification'] = "Magic authentication notification";

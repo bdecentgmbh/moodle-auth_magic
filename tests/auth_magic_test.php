@@ -30,6 +30,37 @@ use stdClass;
  * Magic authendication test cases defined.
  */
 class auth_magic_test extends \advanced_testcase {
+
+    /**
+     * Authendication object
+     * @var object
+     */
+    public $auth;
+
+    /**
+     * Summary of generator
+     * @var \testing_data_generator
+     */
+    public $generator;
+
+    /**
+     * Summary of user1
+     * @var object
+     */
+    public $user1;
+
+    /**
+     * Summary of user2
+     * @var object
+     */
+    public $user2;
+
+    /**
+     * Summary of user3
+     * @var object
+     */
+    public $user3;
+
     /**
      * Set the admin user as User.
      *

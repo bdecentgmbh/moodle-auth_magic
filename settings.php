@@ -41,14 +41,6 @@ if ($ADMIN->fulltree) {
     $settings->add($setting);
 
     // Magic invitation link expiry.
-    $name = "auth_magic/invitationexpiry";
-    $title = get_string("invitationexpiry", "auth_magic");
-    $desc = "";
-    $setting = new admin_setting_configduration($name, $title, $desc, 1 * HOURSECS);
-    $settings->add($setting);
-
-
-    // Magic invitation link expiry.
     $name = "auth_magic/loginkeytype";
     $title = get_string("loginkeytype", "auth_magic");
     $desc = get_string("loginkeytype_desc", "auth_magic");

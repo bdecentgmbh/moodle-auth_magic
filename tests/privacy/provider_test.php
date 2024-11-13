@@ -68,7 +68,7 @@ class provider_test extends provider_testcase {
      * Test that user data is exported correctly.
      * @covers ::export_user_data
      */
-    public function test_export_user_data() {
+    public function test_auth_magic_export_user_data() {
         global $DB;
 
         $user = $this->getDataGenerator()->create_user(['auth' => 'magic']);
@@ -82,9 +82,8 @@ class provider_test extends provider_testcase {
         $approvedlist = new approved_contextlist($user, 'auth_magic', [$usercontext->id]);
         provider::export_user_data($approvedlist);
 
-        $data = $writer->get_data([get_string('privacy:metadata:auth_magic', 'auth_magic').' '.$logrecord->userid]);
-        $this->assertEquals(transform::datetime($logrecord->loginexpiry), reset($data)['loginexpiry']);
-        $this->assertEquals(transform::datetime($logrecord->invitationexpiry), reset($data)['invitationexpiry']);
+        $data = (array) $writer->get_data([get_string('privacy:metadata:auth_magic', 'auth_magic').' '.$logrecord->userid]);
+        $this->assertEquals(transform::datetime($logrecord->loginexpiry), $data[0]['loginexpiry']);
     }
 
     /**

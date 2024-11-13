@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version information
+ * Defines message providers (types of message sent) for the magic auth plugin.
  *
  * @package    auth_magic
  * @copyright  2023 bdecent gmbh <https://bdecent.de>
@@ -24,9 +24,10 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2024111300;        // The current plugin version (Date: YYYYMMDDXX).
-$plugin->requires = 2020060900;        // Requires this Moodle version.
-$plugin->component = 'auth_magic';    // Full name of the plugin (used for diagnostics).
-$plugin->release = 'v1.1';
-$plugin->maturity = MATURITY_RC;
-$plugin->supported = [400, 405];
+$messageproviders = [
+    'notification' => [
+        'defaults' => [
+            'email' => MESSAGE_PERMITTED + MESSAGE_DEFAULT_ENABLED,
+        ],
+    ],
+];
