@@ -110,7 +110,7 @@ if (get_config('auth_magic', 'loginkeytype') == 'once') {
     delete_user_key('auth/magic', $key->userid);
     $DB->delete_records('auth_magic_loginlinks', array('userid' => $key->userid));
 }
-if (isloggedin()) {
+if (isloggedin() && !isguestuser()) {
     if ($USER->id != $key->userid) {
         // Logout the current user if it's different to one that associated to the valid key.
         require_logout();
