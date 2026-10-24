@@ -37,14 +37,20 @@ fields.
 
 ## Logging in with a link
 
-`login.php?key=…`:
+`login.php?key=…` opened with GET changes nothing. It checks the key read-only and shows a confirmation,
+"Log in to … as …?" (or the account switch question if another user is logged in), whose button posts
+the key with the sesskey. Mail scanners and link previews therefore neither use links up nor log
+anybody in, and a link from somebody else can't log a visitor in unnoticed (login CSRF).
+
+The confirmed POST then:
 
 1. `auth_plugin_magic::check_userkey_type()` sends a new link for an expired key (limited like
    requests) and returns to the login page;
 2. `validate_user_key()`; invalid keys return to the login page with a message;
 3. `core_user::require_active_user()` and `auth_plugin_magic::can_login_with_link()`; links the policy
    no longer allows are deleted;
-4. if another user is logged in, a confirmation with sesskey before `require_logout()`;
+4. if another user is logged in, `require_logout()` and a redirect to the link, which asks again,
+   because the logout ends the session;
 5. single-use keys are deleted (`delete_magic_instance()`), then `complete_user_login()` and a redirect
    to `core_login_get_return_url()`.
 

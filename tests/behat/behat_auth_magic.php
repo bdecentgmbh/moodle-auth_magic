@@ -48,6 +48,27 @@ class behat_auth_magic extends behat_base {
     }
 
     /**
+     * Opens the current magic login link of a user and confirms the login.
+     *
+     * @When /^I log in with the magic login link of "(?P<username_string>(?:[^"]|\\")*)"$/
+     * @param string $username
+     */
+    public function i_log_in_with_the_magic_login_link_of(string $username): void {
+        $this->i_open_the_magic_login_link_of($username);
+        $this->execute('behat_forms::press_button', [get_string('login')]);
+    }
+
+    /**
+     * Opens the magic login link opened last once more and confirms the login.
+     *
+     * @When /^I log in with the last magic login link again$/
+     */
+    public function i_log_in_with_the_last_magic_login_link_again(): void {
+        $this->i_open_the_last_magic_login_link_again();
+        $this->execute('behat_forms::press_button', [get_string('login')]);
+    }
+
+    /**
      * Clicks the magic link button of the login page, whose label differs between Moodle versions.
      *
      * @When /^I click on the magic link button$/

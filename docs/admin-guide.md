@@ -73,6 +73,8 @@ between magic link emails*.
 ### Using a link
 
 Whether a link that is valid (not expired, not used yet if links work only once) logs the account in.
+Opening a link only asks "Do you want to log in to … as …?"; the account is logged in when the user
+clicks *Log in*.
 
 | Account | Magic only | Any method |
 |---|---|---|
@@ -132,6 +134,9 @@ when it is turned back on. Accounts created while it was off have no password un
 - **No inbox flooding.** *Minimum time between magic link emails* limits the emails anybody can
   trigger for an account: requested links, the notice for other login methods and the new link sent
   when somebody uses an expired one.
+- **Opening a link changes nothing.** It shows whom the link logs in, and the user confirms with
+  *Log in*. So mail scanners and link previews, such as Outlook Safe Links, don't use up single-use
+  links, and a link from somebody else can't log a visitor into another account unnoticed.
 - **No silent account switch.** If somebody else is logged in when a link is opened, they are asked
   "You are logged in as … Do you want to log out and log in as …?" before anything changes.
 - **Links follow your policy.** A link only works while the account may use links. If you set

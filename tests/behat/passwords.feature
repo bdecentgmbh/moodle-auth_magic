@@ -17,7 +17,7 @@ Feature: Passwords for magic accounts
     And I press "Log in"
     And I visit "/user/profile.php"
     Then I should not see "User One"
-    And I open the magic login link of "user_01"
+    And I log in with the magic login link of "user_01"
     And I follow "Preferences" in the user menu
     And I should see "Edit profile"
     And I should not see "Change password"

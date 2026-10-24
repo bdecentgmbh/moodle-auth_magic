@@ -39,12 +39,12 @@ Feature: Settings of magic authentication
     And I set the field "Username or email" to "user_03"
     And I press "Get a magic link via email"
     And I should see "If you supplied a correct username, an email containing a magic login link should have been sent to your email address."
-    And I open the magic login link of "user_03"
+    And I log in with the magic login link of "user_03"
     And I visit "/user/profile.php"
     And I should see "User Three"
     # Until it expires: the same link logs in again.
     And I log out
-    And I open the last magic login link again
+    And I log in with the last magic login link again
     And I visit "/user/profile.php"
     And I should see "User Three"
 
@@ -55,7 +55,7 @@ Feature: Settings of magic authentication
     And I visit "/auth/magic/login.php"
     And I set the field "Email address" to "user_03@example.com"
     And I press "Get a magic link via email"
-    And I open the magic login link of "user_03"
+    And I log in with the magic login link of "user_03"
     And I log out
     And I log in as "admin"
     And I navigate to "Plugins > Authentication > Magic authentication" in site administration

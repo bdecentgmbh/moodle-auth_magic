@@ -85,7 +85,50 @@ if ($keyvalue === '') {
     die;
 }
 
-// A link that has expired sends a new one and returns to the login page.
+// Opening a link only shows whom it logs in; it logs in when the visitor confirms with a POST. So mail
+// scanners and link previews neither use links up nor log anybody in, and a link from somebody else
+// can't log a visitor into another account unnoticed (login CSRF).
+if (!data_submitted() || !confirm_sesskey(optional_param('sesskey', '', PARAM_RAW))) {
+    // Nothing changes before the confirmation: no login, no new link, no deleted link.
+    $key = $DB->get_record('user_private_key', ['script' => 'auth/magic', 'value' => $keyvalue]);
+    $user = $key ? core_user::get_user($key->userid) : false;
+    if (!$user) {
+        // Used up or replaced by a newer link.
+        auth_magic_redirect_with_message(get_string('invalidlink', 'auth_magic'), \core\output\notification::NOTIFY_ERROR);
+    }
+    core_user::require_active_user($user, true, true);
+    if (!$auth->can_login_with_link($user)) {
+        auth_magic_redirect_with_message(get_string('linknotallowed', 'auth_magic'), \core\output\notification::NOTIFY_ERROR);
+    }
+    $loggedin = isloggedin() && !isguestuser();
+    if ($loggedin && $USER->id == $user->id) {
+        redirect(core_login_get_return_url());
+    }
+
+    $a = (object) ['sitename' => format_string($SITE->fullname), 'target' => fullname($user)];
+    if ($loggedin) {
+        $a->current = fullname($USER);
+    }
+    $title = get_string('requestlinkheading', 'auth_magic');
+    $PAGE->set_pagelayout('login');
+    $PAGE->set_title($title);
+    echo $OUTPUT->header();
+    echo $OUTPUT->confirm(
+        get_string($loggedin ? 'switchaccountconfirm' : 'loginconfirm', 'auth_magic', $a),
+        new single_button(
+            new moodle_url($PAGE->url, ['key' => $keyvalue, 'sesskey' => sesskey()]),
+            get_string($loggedin ? 'continue' : 'login'),
+            'post',
+            single_button::BUTTON_PRIMARY
+        ),
+        $loggedin ? new moodle_url('/') : get_login_url(),
+        ['confirmtitle' => $title]
+    );
+    echo $OUTPUT->footer();
+    die;
+}
+
+// Confirmed. A link that has expired sends a new one and returns to the login page.
 $auth->check_userkey_type($keyvalue);
 
 try {
@@ -108,22 +151,8 @@ if (isloggedin() && !isguestuser()) {
     if ($USER->id == $user->id) {
         redirect(core_login_get_return_url());
     }
-    // Somebody else is logged in. Switching accounts needs their confirmation, so that a link
-    // from somebody else can't log them into another account unnoticed.
-    if (!optional_param('confirm', 0, PARAM_BOOL) || !confirm_sesskey(optional_param('sesskey', '', PARAM_RAW))) {
-        $PAGE->set_title(get_string('switchaccount', 'auth_magic'));
-        echo $OUTPUT->header();
-        echo $OUTPUT->confirm(
-            get_string('switchaccountconfirm', 'auth_magic', (object) [
-                'current' => fullname($USER),
-                'target' => fullname($user),
-            ]),
-            new moodle_url($PAGE->url, ['key' => $keyvalue, 'confirm' => 1, 'sesskey' => sesskey()]),
-            new moodle_url('/')
-        );
-        echo $OUTPUT->footer();
-        die;
-    }
+    // The visitor confirmed to switch from another account. The logout ends the session, so the
+    // login needs a new request, and the visitor confirms it as well.
     require_logout();
     redirect(new moodle_url($PAGE->url, ['key' => $keyvalue]));
 }
