@@ -25,23 +25,20 @@ namespace auth_magic\event;
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot. "/auth/magic/auth.php");
-require_once($CFG->dirroot. "/auth/magic/lib.php");
+require_once($CFG->dirroot . "/auth/magic/auth.php");
+require_once($CFG->dirroot . "/auth/magic/lib.php");
 
 /**
  * Event observer for auth_magic.
  */
 class observer {
-
     /**
      * Create user data creation request when the user is created.
      *
      * @param \core\event\user_created $event
      */
     public static function created_user_data_request(\core\event\user_created $event) {
-        global $USER, $CFG;
         $userid = $event->objectid;
-        $usercontext = \context_user::instance($userid);
         $user = \core_user::get_user($userid);
         if ($user->auth == 'magic') {
             $auth = get_auth_plugin('magic');
@@ -59,29 +56,29 @@ class observer {
      * @return bool
      */
     public static function create_delete_data_request(\core\event\user_deleted $event) {
-        global $DB;
-        $userid = $event->objectid;
-        $DB->delete_records('auth_magic_loginlinks', array('userid' => $userid));
-        delete_user_key('auth/magic', $userid);
+        get_auth_plugin('magic')->delete_magic_instance($event->objectid);
         return true;
     }
 
     /**
      * Create user data update request when the user is updated.
      *
+     * Accounts that move to a login method that may not use magic links lose their link.
+     *
      * @param \core\event\user_updated $event
      *
      * @return bool
      */
     public static function create_update_data_request(\core\event\user_updated $event) {
-        global $DB, $USER, $CFG;
+        global $DB;
         $userid = $event->objectid;
-        $usercontext = \context_user::instance($userid);
         $user = \core_user::get_user($userid);
+        $auth = get_auth_plugin('magic');
         if ($user->auth == 'magic') {
-            $auth = get_auth_plugin('magic');
             // Request login url.
             $auth->create_magic_instance($user);
+        } else if (!$auth->can_login_with_link($user) && $DB->record_exists('auth_magic_loginlinks', ['userid' => $userid])) {
+            $auth->delete_magic_instance($userid);
         }
         return true;
     }

@@ -23,93 +23,88 @@
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-use core_user\output\myprofile\tree;
-
 /**
  * Get user login link
+ *
+ * The link is built from the key, so that it follows changes of the site URL.
+ *
  * @param int $userid
- * @return string url.
+ * @return string url, empty if the user has no login key
  */
 function auth_magic_get_user_login_link($userid) {
     global $DB;
-    return $DB->get_field('auth_magic_loginlinks', 'magiclogin', array('userid' => $userid), 'loginurl');
+    $key = $DB->get_field('auth_magic_loginlinks', 'loginuserkey', ['userid' => $userid]);
+    return $key ? auth_magic_link_url($key)->out(false) : '';
+}
+
+/**
+ * URL of the magic link for a key.
+ *
+ * @param string $key
+ * @return moodle_url
+ */
+function auth_magic_link_url(string $key): moodle_url {
+    return new moodle_url('/auth/magic/login.php', ['key' => $key]);
 }
 
 
 /**
- * Send message to user using message api.
+ * Email a message to a user.
  *
- * @param  mixed $userto
- * @param  mixed $subject
- * @param  mixed $messageplain
- * @param  mixed $messagehtml
- * @param  mixed $courseid
- * @return bool message status
+ * Like the password reset of core, this always uses email: whoever asks for a magic link isn't
+ * logged in, so other message channels don't reach them, and links shouldn't be kept as
+ * notifications.
+ *
+ * @param stdClass $userto
+ * @param string $subject
+ * @param string $messageplain
+ * @param string $messagehtml
+ * @return bool Whether the email was sent
  */
-function auth_magic_messagetouser($userto, $subject, $messageplain, $messagehtml, $courseid = null) {
-    $eventdata = new \core\message\message();
-    $eventdata->name = 'instantmessage';
-    $eventdata->component = 'moodle';
-    $eventdata->courseid = empty($courseid) ? SITEID : $courseid;
-    $eventdata->userfrom = core_user::get_support_user();
-    $eventdata->userto = $userto;
-    $eventdata->subject = $subject;
-    $eventdata->fullmessage = $messageplain;
-    $eventdata->fullmessageformat = FORMAT_HTML;
-    $eventdata->fullmessagehtml = $messagehtml;
-    $eventdata->smallmessage = $subject;
-
-    if (message_send($eventdata)) {
-        return true;
-    } else {
-        return false;
-    }
+function auth_magic_messagetouser($userto, $subject, $messageplain, $messagehtml) {
+    return email_to_user($userto, core_user::get_noreply_user(), $subject, $messageplain, $messagehtml);
 }
 
 /**
  * Sent the login link to the user.
+ *
+ * A login key that has expired or is gone is replaced first, so that the link works.
+ *
  * @param int $userid
- * @param bool $otherauth
- * @param bool $expired
+ * @param bool $otherauth Whether the user has another login method than magic
+ * @param bool $expired Whether the user tried an expired link, which changes the message
  * @return bool message status
  */
 function auth_magic_sent_loginlink_touser($userid, $otherauth = false, $expired = false) {
     global $DB;
     $site = get_site();
-    $user = \core_user::get_user($userid);
+    $user = \core_user::get_user($userid, '*', MUST_EXIST);
     $auth = get_auth_plugin('magic');
-    if ($otherauth) {
-        $auth->create_magic_instance($user, false);
+    $auth->create_magic_instance($user, !$otherauth);
+
+    $instance = $DB->get_record('auth_magic_loginlinks', ['userid' => $user->id], '*', MUST_EXIST);
+    $keyexists = $DB->record_exists('user_private_key', [
+        'script' => 'auth/magic',
+        'userid' => $user->id,
+        'value' => $instance->loginuserkey,
+    ]);
+    if (!$keyexists || (!empty($instance->loginexpiry) && $instance->loginexpiry < time())) {
+        $auth->update_new_loginkey($user, $instance);
     }
-    $loginlink = auth_magic_get_user_login_link($userid);
+
     $subject = get_string('loginsubject', 'auth_magic', format_string($site->fullname));
     $data = new stdClass();
     $data->sitename = format_string($site->fullname);
     $data->admin = generate_email_signoff();
     $data->fullname = fullname($user);
-    if (empty($loginlink)) {
-        $auth->create_magic_instance($user, false);
-        $loginlink = auth_magic_get_user_login_link($user->id);
-    }
-    $data->link = $loginlink;
-    $data->expiry = auth_magic_get_user_magic_link_expires($userid, 'loginexpiry');
-    if ($expired) {
-        $messageplain = get_string('expiredloginlinkmsg', 'auth_magic', $data);
-    } else {
-        // Check link is expiry and more type.
-        $instance = $DB->get_record('auth_magic_loginlinks', array('userid' => $user->id));
-        if ($instance->loginexpiry < time()) {
-            $auth->update_new_loginkey($user, $instance);
-            auth_magic_sent_loginlink_touser($user->id, $otherauth);
-            return;
-        }
-        $messageplain = get_string('loginlinkmessage', 'auth_magic', $data);
-    }
-    $messagehtml = text_to_html($messageplain, false, false, true);
+    $data->link = auth_magic_get_user_login_link($user->id);
+    $data->expiry = auth_magic_get_user_magic_link_expires($user->id, 'loginexpiry');
+    // The message strings contain HTML, the plain text part is made from it.
+    $message = get_string($expired ? 'expiredloginlinkmsg' : 'loginlinkmessage', 'auth_magic', $data);
+    $messagehtml = text_to_html($message, false, false, true);
+    $messageplain = html_to_text($messagehtml);
     $user->mailformat = 1;  // Always send HTML version as well.
-    auth_magic_messagetouser($user, $subject, $messageplain, $messagehtml);
-    return true;
-
+    return auth_magic_messagetouser($user, $subject, $messageplain, $messagehtml);
 }
 
 
@@ -121,8 +116,8 @@ function auth_magic_sent_loginlink_touser($userid, $otherauth = false, $expired 
  */
 function auth_magic_get_user_magic_link_expires($userid, $type) {
     global $DB;
-    $expiry = $DB->get_field('auth_magic_loginlinks', $type,  array('userid' => $userid));
-    return $expiry ? auth_magic_expirytime_convert_datestring($expiry) : '';
+    $expiry = $DB->get_field('auth_magic_loginlinks', $type, ['userid' => $userid]);
+    return $expiry ? auth_magic_expirytime_convert_datestring($expiry) : get_string('never');
 }
 
 /**
@@ -145,36 +140,144 @@ function auth_magic_expirytime_convert_datestring($expiry) {
 }
 
 /**
- * Sent the information for non magic auth users.
+ * Tell a user who asked for a magic link that their account can't use one.
+ *
+ * The email offers to reset the password only if the login method of the account can reset it.
+ *
  * @param int $userid
- * @return void
+ * @return bool Whether the email was sent
  */
 function auth_magic_requiredmail_magic_authentication($userid) {
     $site = get_site();
     $user = \core_user::get_user($userid);
-    $forgothtml = html_writer::link(new moodle_url('/login/forgot_password.php'), get_string('forgotten'));
-    $subject = get_string('loginsubject', 'auth_magic', format_string($site->fullname));
+    $subject = get_string('nomagiclinksubject', 'auth_magic', format_string($site->fullname));
     $data = new stdClass();
     $data->sitename = format_string($site->fullname);
     $data->admin = generate_email_signoff();
     $data->fullname = fullname($user);
-    $data->forgothtml = $forgothtml;
-    $messageplain = get_string('preventmagicauthmessage', 'auth_magic', $data);
-    $messagehtml = text_to_html($messageplain, false, false, true);
+    $data->forgotten = '';
+    if (is_enabled_auth($user->auth) && get_auth_plugin($user->auth)->can_reset_password()) {
+        $link = html_writer::link(new moodle_url('/login/forgot_password.php'), get_string('forgotten'));
+        $data->forgotten = "\n\n" . get_string('nomagiclinkforgotten', 'auth_magic', $link);
+    }
+    $messagehtml = text_to_html(get_string('nomagiclinkmessage', 'auth_magic', $data), false, false, true);
+    $messageplain = html_to_text($messagehtml);
     $user->mailformat = 1;
     return auth_magic_messagetouser($user, $subject, $messageplain, $messagehtml);
 }
 
 /**
- * Get magic email user.
- * @param string $email
- * @return stdclass user
+ * Find the local account for an email address, or for a username if the plugin allows usernames.
+ *
+ * Emails are matched case-insensitively, like the core login. An email that several accounts share
+ * matches none of them.
+ *
+ * @param string $email Email address or username
+ * @return stdClass|null user
  */
 function auth_magic_get_email_user($email) {
-    global $DB;
-    $user = $DB->get_record('user', ['email' => $email]);
-    if (!$user && get_config('auth_magic', 'loginoption')) {
-        $user = $DB->get_record('user', array('username' => $email));
+    global $CFG, $DB;
+
+    $value = trim($email);
+    if ($value === '') {
+        return null;
     }
-    return !empty($user) ? $user : null;
+    $params = ['mnethostid' => $CFG->mnet_localhost_id];
+    $users = [];
+    if (validate_email($value)) {
+        $select = $DB->sql_equal('email', ':email', false) . ' AND mnethostid = :mnethostid AND deleted = 0';
+        $users = $DB->get_records_select('user', $select, $params + ['email' => $value], 'id', '*', 0, 2);
+    }
+    if (!$users && get_config('auth_magic', 'loginoption')) {
+        $select = 'username = :username AND mnethostid = :mnethostid AND deleted = 0';
+        $params['username'] = core_text::strtolower($value);
+        $users = $DB->get_records_select('user', $select, $params, 'id', '*', 0, 2);
+    }
+    return count($users) === 1 ? reset($users) : null;
+}
+
+/**
+ * Whether the user may be sent another email that anybody can trigger, such as a requested link.
+ *
+ * A user gets at most one such email within the request interval of the plugin. If one may be
+ * sent now, the time is recorded.
+ *
+ * @param int $userid
+ * @return bool
+ */
+function auth_magic_may_send_link_email(int $userid): bool {
+    $interval = (int) get_config('auth_magic', 'requestinterval');
+    if ($interval <= 0) {
+        return true;
+    }
+    $now = time();
+    if ((int) get_user_preferences('auth_magic_lastlinkemail', 0, $userid) > $now - $interval) {
+        return false;
+    }
+    set_user_preference('auth_magic_lastlinkemail', $now, $userid);
+    return true;
+}
+
+/**
+ * Return to the login page with a message, or to the home page if the user is logged in.
+ *
+ * The login page shows the message in its form, like its own messages, so that it fits the login
+ * layout of every theme. A page notification would sit next to the form in some of them.
+ *
+ * @param string $message
+ * @param string $type A \core\output\notification type, error or info
+ */
+function auth_magic_redirect_with_message(string $message, string $type = \core\output\notification::NOTIFY_INFO): void {
+    global $SESSION;
+    if (isloggedin() && !isguestuser()) {
+        redirect(new moodle_url('/'), $message, null, $type);
+    }
+    if ($type === \core\output\notification::NOTIFY_ERROR) {
+        $SESSION->loginerrormsg = $message;
+    } else {
+        $SESSION->logininfomsg = $message;
+    }
+    redirect(get_login_url());
+}
+
+/**
+ * Remove the magic links of accounts with other login methods when the plugin goes back to magic only.
+ *
+ * Called when the supported authentication method setting changes.
+ */
+function auth_magic_authmethod_updated(): void {
+    global $DB;
+    if (get_config('auth_magic', 'authmethod')) {
+        return;
+    }
+    $select = 'userid IN (SELECT id FROM {user} WHERE auth <> :auth)';
+    $DB->delete_records_select('user_private_key', "script = :script AND $select", ['script' => 'auth/magic', 'auth' => 'magic']);
+    $DB->delete_records_select('auth_magic_loginlinks', $select, ['auth' => 'magic']);
+}
+
+/**
+ * Answer a request for a magic link made for an existing account.
+ *
+ * The account gets a magic link, or a reminder to use its own login method if it may not use
+ * magic links. Suspended and unconfirmed accounts, the guest account and accounts that can't log
+ * in interactively get nothing, and nobody gets more than one email per request interval.
+ *
+ * @param stdClass $user
+ */
+function auth_magic_process_link_request(stdClass $user): void {
+    if (!empty($user->deleted) || !empty($user->suspended) || empty($user->confirmed) || isguestuser($user)) {
+        return;
+    }
+    if (in_array($user->auth, ['nologin', 'webservice'])) {
+        return;
+    }
+    if (!auth_magic_may_send_link_email($user->id)) {
+        return;
+    }
+    $auth = get_auth_plugin('magic');
+    if ($auth->can_login_with_link($user)) {
+        auth_magic_sent_loginlink_touser($user->id, $user->auth !== 'magic');
+    } else {
+        auth_magic_requiredmail_magic_authentication($user->id);
+    }
 }

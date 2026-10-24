@@ -1,57 +1,70 @@
 # Magic authentication
 
-Moodle authentication plugin which enables users to login using magic links (instead of passwords)
+Moodle authentication plugin which lets users log in with a link they get by email, instead of a
+password.
 
-# Requirements
+We believe there should be no barriers between learners and their courses, and forgotten passwords
+are one of the most common. Moodle can reset passwords, but not everybody finds or understands it.
+Every Moodle account has an email address, so a link by email avoids passwords altogether.
 
-This plugin requires Moodle 3.9+
+## Features
 
-# Motivation for this plugin
+- **Magic links**: users type their email address (or username, if allowed) on the login page and
+  get a link that logs them in, also to the page they wanted.
+- **Expiry and single use**: links expire after a set time and can work once or until they expire.
+- **Any login method**: optionally, accounts with other login methods can use links as well.
+- **Safe by default**: link requests don't reveal whether an account exists, need the login form's
+  token and are limited per account. A link of another account asks before it switches the logged-in
+  user, and links stop working when your login method policy no longer allows them.
+- **Privacy API**: exports and deletes the users' links.
 
-We believe it is important that there are no barriers and obstacles between the learner and the course. One of the most common problems is that people forget their password. While Moodle already has a very easy way to reset the password, not all users understand that it exists and how to use it. The logical consequence is to avoid the necessity of passwords anyway. Not every target group has email access, but since it's a requirement for a moodle account, we think it's an assumption that is ok to set. 
+The login page itself stays the core login page. A custom login page with only an email field,
+sign-up and registration campaigns are part of
+[Magic Authentication Pro](https://bdecent.de/product/magic-authentication-pro/).
 
-# Installation
+## Requirements
 
-Install the plugin like any other plugin to folder /auth/magic
-See http://docs.moodle.org/en/Installing_plugins for details on installing Moodle plugins
+Moodle 4.5 to 5.3. Outgoing email must work, as links are sent by email only.
 
-# Initial Configuration
+## Installation
 
-Admins need to enable Magic Authentication under Site Administration > Plugins > Authentication > Manage authentication by clicking the eye icon.
-And they should review the expiration times to match their requirements.
+Install the plugin like any other plugin to folder `auth/magic`, see
+[Installing plugins](https://docs.moodle.org/en/Installing_plugins). Then enable it under
+*Site administration ▸ Plugins ▸ Authentication ▸ Manage authentication* and review its settings.
 
-# How to use
+## Documentation
 
-On the login page, users have to enter their email address. 
-Then, they can either click a button to receive an email with a magic link. When the user clicks on that link, she/he is automatically logged in. We do support deep links, i.e. the user will be taken to the URL that the user originally tried to access.
-Or, they can instead directly type in their password.
+- [Administrator guide](docs/admin-guide.md): settings, security, emails, privacy and upgrading
+- [Student guide](docs/student-guide.md): logging in with a magic link
+- [Developer guide](docs/developer-guide.md): how the plugin works
+- [Changes](CHANGES.md)
 
-# Theme support
+## Theme support
 
-This plugin is developed and tested on Moodle Core's Boost theme. It should also work with Boost child themes, including Moodle Core's Classic theme. However, we can't support any other theme than Boost.
+This plugin is developed and tested on Moodle Core's Boost theme. In themes with a different login
+form, the button opens a page that asks for the email address.
 
-# Plugin repositories
+## Plugin repositories
 
-This plugin will be published and regularly updated in the Moodle plugins repository: https://moodle.org/plugins/auth_magic 
-The latest development version can be found on Github: https://github.com/bdecentgmbh/moodle-auth_magic
+This plugin is published in the Moodle plugins directory: https://moodle.org/plugins/auth_magic
+The latest development version is on GitHub: https://github.com/bdecentgmbh/moodle-auth_magic
 
-# Bug and problem reports / Support requests
+## Bug reports, support and feature proposals
 
-This plugin is carefully developed and thoroughly tested, but bugs and problems can always appear. Please report bugs and problems on Github: https://github.com/bdecentgmbh/moodle-auth_magic/issues We will do our best to solve your problems, but please note that due to limited resources we can't always provide per-case support.
+Please report bugs and propose features on GitHub: https://github.com/bdecentgmbh/moodle-auth_magic/issues.
+Pull requests are welcome: https://github.com/bdecentgmbh/moodle-auth_magic/pulls. We do our best to
+help, but due to limited resources we can't always provide per-case support.
 
-# Feature proposals
+## Moodle release support
 
-Please issue feature proposals on Github: https://github.com/bdecentgmbh/moodle-auth_magic/issues Please create pull requests on Github: https://github.com/bdecentgmbh/moodle-mod_whiteboard/pulls We are always interested to read about your feature proposals or even get a pull request from you, but please accept that we can handle your issues only as feature proposals and not as feature requests.
+This plugin is maintained for the two most recent major releases of Moodle as well as the most recent
+LTS release of Moodle.
 
-# Moodle release support
+## Translating this plugin
 
-This plugin is maintained for the two most recent major releases of Moodle as well as the most recent LTS release of Moodle. If you are running a legacy version of Moodle, but want or need to run the latest version of this plugin, you can get the latest version of the plugin, remove the line starting with $plugin->requires from version.php and use this latest plugin version then on your legacy Moodle. However, please note that you will run this setup completely at your own risk. We can't support this approach in any way and there is an undeniable risk for erratic behavior.
+This plugin ships with an English language pack only. Translations are managed through AMOS
+(https://lang.moodle.org) and become part of Moodle's official language packs.
 
-# Translating this plugin
+## Copyright
 
-This Moodle plugin is shipped with an english language pack only. All translations into other languages must be managed through AMOS (https://lang.moodle.org) by what they will become part of Moodle's official language pack.
-
-# Copyright
-
-bdecent gmbh
-bdecent.de
+bdecent gmbh, https://bdecent.de

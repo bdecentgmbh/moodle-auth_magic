@@ -23,9 +23,9 @@
 define([], function() {
 
     /**
-    * Controls Custom styles tool action.
-    * @param {object} params
-    */
+     * Makes the magic link button of the login page request a link for the typed username.
+     * @param {object} params
+     */
     var AuthMagic = function(params) {
         var self = this;
         if (params.loginhook) {
@@ -35,31 +35,14 @@ define([], function() {
     };
 
 
-    AuthMagic.prototype.getMagicLink = function(params, linkId) {
-        var authSelector = linkId + " .potentialidplist a[title=\"" + params.strbutton + "\"]";
-        var MagicLink = "";
-        if (authSelector) {
-            MagicLink = document.querySelectorAll(authSelector)[0];
-            if (MagicLink === undefined) {
-                authSelector = linkId + " .login-identityproviders a";
-                var MagicLinks = document.querySelectorAll(authSelector);
-                if (MagicLinks.length) {
-                    MagicLinks.forEach(function(item) {
-                        var inner = item.innerHTML.trim();
-                        if (inner == params.strbutton) {
-                            MagicLink = item;
-                        }
-                    });
-                }
-            }
-        }
-        return MagicLink;
+    AuthMagic.prototype.getMagicLink = function(params) {
+        // Find the button by its address, its label differs between Moodle versions and themes.
+        return document.querySelector("#page-login-index a[href=\"" + params.linkurl + "\"]");
     };
 
     AuthMagic.prototype.magicLoginHook = function(params) {
         var self = this;
-        var linkId = "#page-login-index";
-        var MagicLink = self.getMagicLink(params, linkId);
+        var MagicLink = self.getMagicLink(params);
         if (MagicLink) {
             self.magicLoginHandler(MagicLink, "form#login #username");
         }
@@ -67,15 +50,17 @@ define([], function() {
 
     AuthMagic.prototype.magicLoginHandler = function(MagicLink, mailHandler) {
         MagicLink.addEventListener("click", function(e) {
-            e.preventDefault();
-
             var returnurl = e.currentTarget.getAttribute("href");
             var userValue = "";
-            //form#login #username
             var mailSelector = document.querySelectorAll(mailHandler)[0];
             if (mailSelector) {
-                userValue = mailSelector.value;
+                userValue = mailSelector.value.trim();
             }
+            if (!userValue) {
+                // Nothing typed yet: follow the link to the page that asks for the email address.
+                return;
+            }
+            e.preventDefault();
 
             // Create a form.
             var form = document.createElement("form");
@@ -94,8 +79,16 @@ define([], function() {
             uservalue.setAttribute("name", "uservalue");
             uservalue.setAttribute("value", userValue);
 
+            // The login token of the login form shows that the request comes from this site.
+            var tokenField = document.querySelector("form#login input[name=\"logintoken\"]");
+            var loginToken = document.createElement("input");
+            loginToken.setAttribute("type", "hidden");
+            loginToken.setAttribute("name", "logintoken");
+            loginToken.setAttribute("value", tokenField ? tokenField.value : "");
+
             form.appendChild(magicLogin);
             form.appendChild(uservalue);
+            form.appendChild(loginToken);
 
             MagicLink.parentNode.appendChild(form);
 

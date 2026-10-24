@@ -17,22 +17,20 @@
 /**
  * Magic authentication login - Create magic links to login user.
  *
- * @package auth_magic
+ * @package    auth_magic
  * @copyright  2023 bdecent gmbh <https://bdecent.de>
- * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->libdir.'/authlib.php');
-require_once($CFG->dirroot."/auth/magic/lib.php");
+require_once($CFG->libdir . '/authlib.php');
+require_once($CFG->dirroot . "/auth/magic/lib.php");
 
 /**
  * Magic authentication login.
  */
 class auth_plugin_magic extends auth_plugin_base {
-
-
     /**
      * Constructor.
      */
@@ -41,17 +39,18 @@ class auth_plugin_magic extends auth_plugin_base {
     }
 
     /**
-     * Don't allow login using login form.
+     * Check a password login, which magic accounts only have if the plugin supports passwords.
      *
      * @param string $username The username
      * @param string $password The password
+     * @return bool
      */
     public function user_login($username, $password) {
         global $DB, $CFG;
-        if (!get_config('auth_magic', 'supportpassword')) {
+        if (!$this->supports_passwords()) {
             return false;
         }
-        if (!$user = $DB->get_record('user', array('username' => $username, 'mnethostid' => $CFG->mnet_localhost_id))) {
+        if (!$user = $DB->get_record('user', ['username' => $username, 'mnethostid' => $CFG->mnet_localhost_id])) {
             return false;
         }
         if (!validate_internal_user_password($user, $password)) {
@@ -72,47 +71,14 @@ class auth_plugin_magic extends auth_plugin_base {
 
 
     /**
-     * Confirm the new user as registered.
+     * Change the password, if the plugin supports passwords.
      *
-     * @param string $username
-     * @param string $confirmsecret
-     */
-    public function user_confirm($username, $confirmsecret) {
-        global $DB, $SESSION;
-        $user = get_complete_user_data('username', $username);
-
-        if (!empty($user)) {
-            if ($user->auth != $this->authtype) {
-                return AUTH_CONFIRM_ERROR;
-
-            } else if ($user->secret === $confirmsecret && $user->confirmed) {
-                return AUTH_CONFIRM_ALREADY;
-
-            } else if ($user->secret === $confirmsecret) {   // They have provided the secret key to get in.
-                $DB->set_field("user", "confirmed", 1, array("id" => $user->id));
-
-                if ($wantsurl = get_user_preferences('auth_magic_wantsurl', false, $user)) {
-                    // Ensure user gets returned to page they were trying to access before signing up.
-                    $SESSION->wantsurl = $wantsurl;
-                    unset_user_preference('auth_magic_wantsurl', $user);
-                }
-
-                return AUTH_CONFIRM_OK;
-            }
-        } else {
-            return AUTH_CONFIRM_ERROR;
-        }
-    }
-
-
-    /**
-     * No password updates.
-     *
-     * @param string $user The username
-     * @param string $newpassword The password
+     * @param stdClass $user
+     * @param string $newpassword
+     * @return bool Whether the password was changed
      */
     public function user_update_password($user, $newpassword) {
-        if (get_config('auth_magic', 'supportpassword')) {
+        if ($this->supports_passwords()) {
             $user = get_complete_user_data('id', $user->id);
             // This will also update the stored hash to the latest algorithm
             // if the existing hash is using an out-of-date algorithm (or the
@@ -123,32 +89,41 @@ class auth_plugin_magic extends auth_plugin_base {
     }
 
     /**
-     * Don't store local passwords.
+     * Whether the plugin supports passwords for magic accounts (setting Supports password).
      *
-     * @return bool True.
+     * @return bool
      */
-    public function prevent_local_passwords() {
-        // Just in case, we do not want to loose the passwords.
-        return !get_config('auth_magic', 'supportpassword');
+    protected function supports_passwords(): bool {
+        return !empty(get_config('auth_magic', 'supportpassword'));
     }
 
     /**
-     * No external data sync.
+     * Don't store new passwords unless the plugin supports passwords.
+     *
+     * Passwords stored while it did are kept, in case it does again.
+     *
+     * @return bool
+     */
+    public function prevent_local_passwords() {
+        return !$this->supports_passwords();
+    }
+
+    /**
+     * Magic accounts use the password of the user table if the plugin supports passwords.
      *
      * @return bool
      */
     public function is_internal() {
-        // We do not know if it was internal or external originally.
-        return get_config('auth_magic', 'supportpassword');
+        return $this->supports_passwords();
     }
 
     /**
-     * No changing of password.
+     * Passwords can be changed if the plugin supports passwords.
      *
      * @return bool
      */
     public function can_change_password() {
-        return get_config('auth_magic', 'supportpassword');
+        return $this->supports_passwords();
     }
 
     /**
@@ -162,10 +137,12 @@ class auth_plugin_magic extends auth_plugin_base {
     }
 
     /**
-     * No password resetting.
+     * Passwords can be reset if the plugin supports passwords.
+     *
+     * @return bool
      */
     public function can_reset_password() {
-        return get_config('auth_magic', 'supportpassword');
+        return $this->supports_passwords();
     }
 
     /**
@@ -185,7 +162,6 @@ class auth_plugin_magic extends auth_plugin_base {
      * @param int $validuntil
      */
     public function create_user_key($userid, $validuntil) {
-        $config = $this->get_config_data();
         return create_user_key(
             'auth/magic',
             $userid,
@@ -205,6 +181,58 @@ class auth_plugin_magic extends auth_plugin_base {
     }
 
     /**
+     * Delete the magic link of a user, with its keys.
+     *
+     * @param int $userid
+     */
+    public function delete_magic_instance(int $userid): void {
+        global $DB;
+        $this->delete_keys($userid);
+        $DB->delete_records('auth_magic_loginlinks', ['userid' => $userid]);
+    }
+
+    /**
+     * Whether the user may log in with a magic link.
+     *
+     * Magic accounts always may. Accounts with other login methods may if the plugin supports any
+     * method and their own method is enabled, as the core login requires. The guest account and
+     * accounts that can't log in interactively at all (No login, Web services) never may.
+     *
+     * @param stdClass $user
+     * @return bool
+     */
+    public function can_login_with_link(stdClass $user): bool {
+        if (isguestuser($user)) {
+            return false;
+        }
+        if ($user->auth === $this->authtype) {
+            return true;
+        }
+        if (in_array($user->auth, ['nologin', 'webservice'])) {
+            return false;
+        }
+        return !empty(get_config('auth_magic', 'authmethod')) && is_enabled_auth($user->auth);
+    }
+
+    /**
+     * Whether opening a link asks "Log in as …?" before it logs in a visitor who isn't logged in.
+     *
+     * Setting Ask before logging in: always (the default), only for single-use links, or never.
+     *
+     * @return bool
+     */
+    public function asks_before_login(): bool {
+        switch (get_config('auth_magic', 'confirmlogin')) {
+            case 'never':
+                return false;
+            case 'once':
+                return get_config('auth_magic', 'loginkeytype') == 'once';
+            default:
+                return true;
+        }
+    }
+
+    /**
      * Get plugin config data.
      * @return stdClass data
      */
@@ -219,13 +247,14 @@ class auth_plugin_magic extends auth_plugin_base {
      * @return array Array of idps.
      */
     public function loginpage_idp_list($wantsurl) {
-        global $PAGE;
         return [
             [
                 'url' => new \moodle_url('/auth/magic/login.php'),
                 'iconurl' => '',
-                'name' => get_string('getmagiclinkviagmail', 'auth_magic'),
-            ]
+                // A name rather than an action: the Moodle 5.3 login page shows it as "Log in with ...",
+                // other versions and themes on its own.
+                'name' => get_string('magiclinkprovider', 'auth_magic'),
+            ],
         ];
     }
 
@@ -234,13 +263,12 @@ class auth_plugin_magic extends auth_plugin_base {
      * This method is called from login/index.php page for all enabled auth plugins.
      */
     public function loginpage_hook() {
-        global $CFG, $PAGE;
-        $CFG->authloginviaemail = true;
-        $params = array(
+        global $PAGE;
+        $params = [
             'loginhook' => true,
-            'strbutton' => get_string('getmagiclinkviagmail', 'auth_magic'),
-        );
-        $PAGE->requires->js_call_amd('auth_magic/authmagic', 'init', array($params));
+            'linkurl' => (new \moodle_url('/auth/magic/login.php'))->out(false),
+        ];
+        $PAGE->requires->js_call_amd('auth_magic/authmagic', 'init', [$params]);
     }
 
 
@@ -251,34 +279,23 @@ class auth_plugin_magic extends auth_plugin_base {
      * @return void
      */
     public function create_magic_instance($user, $checkparent = true) {
-        global $CFG, $DB, $USER;
+        global $DB;
 
-        if (!$DB->record_exists('auth_magic_loginlinks', array('userid' => $user->id))) {
-            $config = $this->get_config_data();
-            $loginexpiry = !empty($config->loginexpiry) ? time() + $config->loginexpiry : 0;
-            $invitationexpiry = !empty($config->invitationexpiry) ? time() + $config->invitationexpiry : 0;
+        if (!$DB->record_exists('auth_magic_loginlinks', ['userid' => $user->id])) {
+            $loginexpiry = $this->get_login_expiry();
             $loginuserkey = $this->create_user_key($user->id, $loginexpiry);
-            $invitationuserkey = $this->create_user_key($user->id, $invitationexpiry);
-            $loginurl = $CFG->wwwroot . '/auth/magic/login.php?key=' . $loginuserkey;
-            $invitationurl = $CFG->wwwroot . '/auth/magic/login.php?key=' . $invitationuserkey;
-            $parent = 0;
-            $parentrole = null;
             // Insert record.
-            $record = new stdClass;
+            $record = new stdClass();
             $record->userid = $user->id;
             $record->parent = 0;
             $record->magicauth = ($checkparent) ? 1 : 0;
-            $record->parentrole = ($checkparent) ? $parentrole : 0;
+            $record->parentrole = ($checkparent) ? null : 0;
             $record->loginuserkey = $loginuserkey;
-            $record->invitationuserkey = $invitationuserkey;
-            $record->magiclogin = $loginurl;
-            $record->magicinvitation = $invitationurl;
+            $record->magiclogin = auth_magic_link_url($loginuserkey)->out(false);
             $record->loginexpiry = $loginexpiry;
-            $record->invitationexpiry = $invitationexpiry;
             $record->timecreated = time();
             $DB->insert_record('auth_magic_loginlinks', $record);
         }
-
     }
 
     /**
@@ -287,16 +304,15 @@ class auth_plugin_magic extends auth_plugin_base {
      * @param stdClass $keyinstance
      */
     public function update_new_loginkey($user, $keyinstance) {
-        global $DB, $CFG;
-        $config = $this->get_config_data();
-        $loginexpiry = !empty($config->loginexpiry) ? time() + $config->loginexpiry : 0;
+        global $DB;
         if (!empty($keyinstance)) {
             // Delete the previous loginkey.
-            $DB->delete_records('user_private_key', array('value' => $keyinstance->loginuserkey,
-                'userid' => $keyinstance->userid));
+            $DB->delete_records('user_private_key', ['value' => $keyinstance->loginuserkey,
+                'userid' => $keyinstance->userid]);
+            $loginexpiry = $this->get_login_expiry();
             $loginuserkey = $this->create_user_key($user->id, $loginexpiry);
             $keyinstance->loginuserkey = $loginuserkey;
-            $keyinstance->magiclogin = $CFG->wwwroot . '/auth/magic/login.php?key=' . $loginuserkey;
+            $keyinstance->magiclogin = auth_magic_link_url($loginuserkey)->out(false);
             $keyinstance->loginexpiry = $loginexpiry;
             $keyinstance->timemodified = time();
             $DB->update_record('auth_magic_loginlinks', $keyinstance);
@@ -304,61 +320,39 @@ class auth_plugin_magic extends auth_plugin_base {
     }
 
     /**
-     * Wheather key is invitation or login.
-     * @param mixed $key
-     * @return bool
+     * Expiry time for a login key created now.
+     *
+     * @return int Timestamp, 0 if login keys never expire
+     */
+    protected function get_login_expiry(): int {
+        $expiry = (int) get_config('auth_magic', 'loginexpiry');
+        return $expiry > 0 ? time() + $expiry : 0;
+    }
+
+    /**
+     * Send a new link if the login key has expired.
+     *
+     * The user is then redirected and told that a new link is on its way, unless the account may
+     * not use magic links any more. Then the key is refused like any other expired key.
+     *
+     * @param string $key
+     * @return bool True if the key hasn't expired or gets no new link
      */
     public function check_userkey_type($key) {
         global $DB;
-        $options = array(
-            'script' => 'auth/magic',
-            'value' => $key
-        );
 
-        $accessauthtoall = get_config('auth_magic', 'authmethod');
-        if ($instance = $DB->get_record('auth_magic_loginlinks', array('loginuserkey' => $key))) {
-            // Key as login.
-            if (!empty($instance->loginexpiry) && $instance->loginexpiry < time()) {
-                // Resend login and indicate to the click the expiry key.
-                $relateduser = \core_user::get_user($instance->userid);
-                if (!$relateduser->suspended && !$relateduser->deleted) {
-                    if ($relateduser->auth == 'magic' || $accessauthtoall) {
-                        $messagestr = get_string('loginexpiryloginlinkwithupdate', 'auth_magic');
-                        $this->update_new_loginkey($relateduser, $instance);
-                        auth_magic_sent_loginlink_touser($relateduser->id, false, true);
-                        // Give the response only for non-login user logged in
-                        // User show the prompt to display the access different account.
-                        if (!isloggedin()) {
-                            redirect(new moodle_url('/login/index.php'), $messagestr,
-                                null, \core\output\notification::NOTIFY_INFO);
-                        }
-                    }
-                }
-            }
-        } else if ($instance = $DB->get_record('auth_magic_loginlinks', array('invitationuserkey' => $key))) {
-            // Key as invitation.
-            if (!empty($instance->invitationexpiry) && $instance->invitationexpiry < time()) {
-                // Resend login.
-                $relateduser = \core_user::get_user($instance->userid);
-                if (!$relateduser->suspended && !$relateduser->deleted) {
-                    if ($relateduser->auth == 'magic' || $accessauthtoall) {
-                        // Exist login is expiry or not.
-                        if (!empty($instance->loginexpiry) && $instance->loginexpiry < time()) {
-                            $this->update_new_loginkey($relateduser, $instance);
-                        }
-                        $messagestr = get_string('invitationexpiryloginlinkwithupdate', 'auth_magic');
-                        auth_magic_sent_loginlink_touser($relateduser->id);
-                        // Give the response only for non-login user logged in
-                        // user show the prompt to display the access different account.
-                        if (!isloggedin()) {
-                            redirect(new moodle_url('/login/index.php'), $messagestr,
-                                null, \core\output\notification::NOTIFY_INFO);
-                        }
-                    }
-                }
-            }
+        $instance = $DB->get_record('auth_magic_loginlinks', ['loginuserkey' => $key]);
+        if (!$instance || empty($instance->loginexpiry) || $instance->loginexpiry >= time()) {
+            return true;
         }
-        return true;
+        $user = \core_user::get_user($instance->userid);
+        if (!$user || $user->deleted || $user->suspended || !$this->can_login_with_link($user)) {
+            return true;
+        }
+        if (auth_magic_may_send_link_email($user->id)) {
+            $this->update_new_loginkey($user, $instance);
+            auth_magic_sent_loginlink_touser($user->id, false, true);
+        }
+        auth_magic_redirect_with_message(get_string('loginexpiryloginlinkwithupdate', 'auth_magic'));
     }
-
 }

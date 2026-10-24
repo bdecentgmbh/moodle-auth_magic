@@ -23,40 +23,51 @@
  */
 
 defined('MOODLE_INTERNAL') || die;
-require_once($CFG->dirroot."/auth/magic/lib.php");
+require_once($CFG->dirroot . "/auth/magic/lib.php");
 
 if ($ADMIN->fulltree) {
-
     // Support password.
     $name = "auth_magic/supportpassword";
     $title = get_string("strsupportpassword", "auth_magic");
-    $setting = new admin_setting_configcheckbox($name, $title, "", 0);
+    $desc = get_string("supportpassword_desc", "auth_magic");
+    $setting = new admin_setting_configcheckbox($name, $title, $desc, 0);
     $settings->add($setting);
 
     // Magic login link expiry.
     $name = "auth_magic/loginexpiry";
     $title = get_string("loginexpiry", "auth_magic");
-    $desc = "";
+    $desc = get_string("loginexpiry_desc", "auth_magic");
     $setting = new admin_setting_configduration($name, $title, $desc, 10 * MINSECS);
     $settings->add($setting);
 
-    // Magic invitation link expiry.
-    $name = "auth_magic/invitationexpiry";
-    $title = get_string("invitationexpiry", "auth_magic");
-    $desc = "";
-    $setting = new admin_setting_configduration($name, $title, $desc, 1 * HOURSECS);
+    // Minimum time between two magic link emails to the same account.
+    $name = "auth_magic/requestinterval";
+    $title = get_string("requestinterval", "auth_magic");
+    $desc = get_string("requestinterval_desc", "auth_magic");
+    $setting = new admin_setting_configduration($name, $title, $desc, 2 * MINSECS, MINSECS);
     $settings->add($setting);
 
-
-    // Magic invitation link expiry.
+    // Magic login key usage.
     $name = "auth_magic/loginkeytype";
     $title = get_string("loginkeytype", "auth_magic");
     $desc = get_string("loginkeytype_desc", "auth_magic");
     $options = [
         'once' => get_string('keyuseonce', 'auth_magic'),
-        'more' => get_string('keyusemultiple', 'auth_magic')
+        'more' => get_string('keyusemultiple', 'auth_magic'),
     ];
     $setting = new admin_setting_configselect($name, $title, $desc, 'once', $options);
+    $settings->add($setting);
+
+    // Whether opening a link asks before it logs in.
+    $name = "auth_magic/confirmlogin";
+    $title = get_string("confirmlogin", "auth_magic");
+    $desc = get_string("confirmlogin_desc", "auth_magic");
+    $options = [
+        'always' => get_string('confirmloginalways', 'auth_magic'),
+        'once' => get_string('confirmloginonce', 'auth_magic'),
+        'never' => get_string('confirmloginnever', 'auth_magic'),
+    ];
+    $setting = new admin_setting_configselect($name, $title, $desc, 'always', $options);
     $settings->add($setting);
 
     // Allow user to use username to login option.
@@ -73,7 +84,8 @@ if ($ADMIN->fulltree) {
     ];
     $name = "auth_magic/authmethod";
     $title = get_string("strsupportauth", "auth_magic");
-    $desc = "";
+    $desc = get_string("authmethod_desc", "auth_magic");
     $setting = new admin_setting_configselect($name, $title, $desc, 0, $options);
+    $setting->set_updatedcallback('auth_magic_authmethod_updated');
     $settings->add($setting);
 }
