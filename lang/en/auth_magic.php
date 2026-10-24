@@ -67,6 +67,7 @@ $string['getmagiclinkviagmail'] = "Get a magic link via email";
 $string['hasbeencreated'] = "has been created";
 $string['instructionsforlinktype'] = "Please provide a magic link type, the types are (invitation or login)";
 $string['invailduser'] = "Invaild user";
+$string['invalidlink'] = 'This magic link is no longer valid. It may have been used already or replaced by a newer link. Please ask for a new link.';
 $string['invitationexpiry'] = "Magic invitation link expiry";
 $string['invitationexpiryloginlink'] = "The invitation link has expired. You cannot use the magic login link to access the site.";
 $string['invitationexpiryloginlinkwithupdate'] = "The invitation link has expired. If the email address belongs to an account that supports login via link, a link has been sent via email";
@@ -223,5 +224,7 @@ $string['strsupportpassword'] = "Supports password";
 
 
 $string['success'] = 'Changes updated';
+$string['switchaccount'] = 'Switch account';
+$string['switchaccountconfirm'] = 'You are logged in as {$a->current}. Do you want to log out and log in as {$a->target}?';
 $string['userhavenotlinks'] = 'User have not any {$a} link';
 $string['userkeyslist'] = "My user accounts";

@@ -26,6 +26,7 @@
 // phpcs:ignore moodle.Files.RequireLogin.Missing
 require_once(__DIR__ . '/../../config.php');
 require_once($CFG->dirroot . "/auth/magic/lib.php");
+require_once($CFG->dirroot . '/login/lib.php');
 if (!is_enabled_auth('magic')) {
     throw new moodle_exception('pluginisdisabled', 'auth_magic');
 }
@@ -91,38 +92,51 @@ if ($keyvalue === '') {
     die;
 }
 
-if (isset($SESSION->wantsurl)) {
-    $redirecturl = $SESSION->wantsurl;
-} else {
-    $redirecturl = $CFG->wwwroot;
-}
-
-// Check key is expired or not.
+// A link that has expired sends a new one and returns to the login page.
 $auth->check_userkey_type($keyvalue);
 
-$key = validate_user_key($keyvalue, 'auth/magic', null);
-if (get_config('auth_magic', 'loginkeytype') == 'once') {
-    delete_user_key('auth/magic', $key->userid);
-    $DB->delete_records('auth_magic_loginlinks', ['userid' => $key->userid]);
-}
-if (isloggedin() && !isguestuser()) {
-    if ($USER->id != $key->userid) {
-        // Logout the current user if it's different to one that associated to the valid key.
-        require_logout();
-        redirect(new moodle_url($PAGE->url, ['key' => $key->value]));
-    } else {
-        // Don't process further if the user is already logged in.
-        redirect($redirecturl);
-    }
+try {
+    $key = validate_user_key($keyvalue, 'auth/magic', null);
+} catch (moodle_exception $e) {
+    // Used up, replaced by a newer link or expired.
+    $returnurl = isloggedin() && !isguestuser() ? new moodle_url('/') : get_login_url();
+    redirect($returnurl, get_string('invalidlink', 'auth_magic'), null, \core\output\notification::NOTIFY_ERROR);
 }
 
 $user = core_user::get_user($key->userid, '*', MUST_EXIST);
 core_user::require_active_user($user, true, true);
-// Do the user log-in.
-if (!$user = get_complete_user_data('id', $user->id)) {
-    throw new moodle_exception('cannotfinduser', '', '', $user->id);
+
+if (isloggedin() && !isguestuser()) {
+    if ($USER->id == $user->id) {
+        redirect(core_login_get_return_url());
+    }
+    // Somebody else is logged in. Switching accounts needs their confirmation, so that a link
+    // from somebody else can't log them into another account unnoticed.
+    if (!optional_param('confirm', 0, PARAM_BOOL) || !confirm_sesskey(optional_param('sesskey', '', PARAM_RAW))) {
+        $PAGE->set_title(get_string('switchaccount', 'auth_magic'));
+        echo $OUTPUT->header();
+        echo $OUTPUT->confirm(
+            get_string('switchaccountconfirm', 'auth_magic', (object) [
+                'current' => fullname($USER),
+                'target' => fullname($user),
+            ]),
+            new moodle_url($PAGE->url, ['key' => $keyvalue, 'confirm' => 1, 'sesskey' => sesskey()]),
+            new moodle_url('/')
+        );
+        echo $OUTPUT->footer();
+        die;
+    }
+    require_logout();
+    redirect(new moodle_url($PAGE->url, ['key' => $keyvalue]));
 }
 
+if (get_config('auth_magic', 'loginkeytype') == 'once') {
+    // A single-use link is used up by the login it makes.
+    delete_user_key('auth/magic', $user->id);
+    $DB->delete_records('auth_magic_loginlinks', ['userid' => $user->id]);
+}
+
+$user = get_complete_user_data('id', $user->id, null, true);
 complete_user_login($user);
 
 \core\session\manager::apply_concurrent_login_limit($user->id, session_id());
@@ -132,4 +146,4 @@ if (empty($CFG->nolastloggedin)) {
     set_moodle_cookie(empty($CFG->rememberusername) ? '' : $USER->username);
 }
 
-redirect($redirecturl);
+redirect(core_login_get_return_url());
