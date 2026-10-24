@@ -22,6 +22,7 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 $string['anymethod'] = "Any method";
+$string['authmethod_desc'] = 'Magic only: only accounts with the login method Magic authentication can use magic links. Accounts with other login methods that ask for one are told to log in as usual. Any method: accounts of all enabled login methods (for example Manual accounts or OAuth 2) can use magic links too, including administrators, who can then log in with access to their mailbox alone. Web service accounts and the guest account never can. Going back to Magic only deletes the links of other login methods.';
 $string['backtologin'] = 'Back to the login page';
 $string['currentlylinkexpiry'] = "As the login link has expired, a new link will be sent to your email address when you click on the expired login link.";
 $string['expiredloginlinkmsg'] = 'Hi {$a->fullname},
@@ -42,9 +43,10 @@ $string['keyusemultiple'] = "Until it expires";
 $string['keyuseonce'] = "Only once";
 $string['linknotallowed'] = 'Your account can no longer log in with a magic link. Please log in with your password or the login method of your account.';
 $string['loginexpiry'] = "Magic login link expiry";
+$string['loginexpiry_desc'] = 'How long a magic link works after it was sent. Somebody who opens an expired link gets a new one by email. 0 means that links never expire: together with "Until it expires" below, a link then works like a permanent password that sits in an email inbox.';
 $string['loginexpiryloginlinkwithupdate'] = "The magic login link has expired. A new magic login link has been sent to your email address.";
 $string['loginkeytype'] = "Configure login key link";
-$string['loginkeytype_desc'] = "This setting allows administrators to configure the behavior of login keys. The login keys can be used only once or until the expiry time.";
+$string['loginkeytype_desc'] = 'Only once: a link logs in once, and users ask for a new link to log in again. Until it expires: a link logs in as often as needed until it expires. Single-use links are safer, as a forwarded or leaked link stops working after its first use.';
 $string['loginlinkmessage'] = 'Hi {$a->fullname},
 
 to access your account on \'{$a->sitename}\', please use the following magic link:
@@ -56,7 +58,7 @@ This link will expire on: <b> {$a->expiry} </b> <br>
 If you need help, please contact the site administrator,
 {$a->admin}';
 $string['loginoption'] = "Allow Username to get magic link";
-$string['loginoptiondesc'] = "Enable this setting to login using the username provided in the login form.";
+$string['loginoptiondesc'] = 'Users can type their username instead of their email address to ask for a magic link. The link always goes to the email address of the account.';
 $string['loginsubject'] = '{$a}: Magic authentication via login';
 $string['magiclinkprovider'] = 'Magic link via email';
 $string['magiconly'] = "Magic only";
@@ -90,5 +92,6 @@ $string['sentlinktouser'] = "If you supplied a correct email address, an email c
 $string['sentlinktousername'] = "If you supplied a correct username, an email containing a magic login link should have been sent to your email address.";
 $string['strsupportauth'] = "Supported authentication method";
 $string['strsupportpassword'] = "Supports password";
+$string['supportpassword_desc'] = 'Magic accounts can also have a password. They then log in with their password as well as with magic links, change it under Preferences and reset it with Forgotten password, and admins can set it under Edit profile. When this is off, magic accounts have no password and password logins fail. Passwords set while this was on are kept, and work again when it is turned back on.';
 $string['switchaccount'] = 'Switch account';
 $string['switchaccountconfirm'] = 'You are logged in as {$a->current}. Do you want to log out and log in as {$a->target}?';

@@ -29,13 +29,14 @@ if ($ADMIN->fulltree) {
     // Support password.
     $name = "auth_magic/supportpassword";
     $title = get_string("strsupportpassword", "auth_magic");
-    $setting = new admin_setting_configcheckbox($name, $title, "", 0);
+    $desc = get_string("supportpassword_desc", "auth_magic");
+    $setting = new admin_setting_configcheckbox($name, $title, $desc, 0);
     $settings->add($setting);
 
     // Magic login link expiry.
     $name = "auth_magic/loginexpiry";
     $title = get_string("loginexpiry", "auth_magic");
-    $desc = "";
+    $desc = get_string("loginexpiry_desc", "auth_magic");
     $setting = new admin_setting_configduration($name, $title, $desc, 10 * MINSECS);
     $settings->add($setting);
 
@@ -71,7 +72,7 @@ if ($ADMIN->fulltree) {
     ];
     $name = "auth_magic/authmethod";
     $title = get_string("strsupportauth", "auth_magic");
-    $desc = "";
+    $desc = get_string("authmethod_desc", "auth_magic");
     $setting = new admin_setting_configselect($name, $title, $desc, 0, $options);
     $setting->set_updatedcallback('auth_magic_authmethod_updated');
     $settings->add($setting);
