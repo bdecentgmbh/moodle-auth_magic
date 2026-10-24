@@ -209,14 +209,13 @@ class auth_plugin_magic extends auth_plugin_base {
      * @return array Array of idps.
      */
     public function loginpage_idp_list($wantsurl) {
-        global $CFG;
-        // From Moodle 5.3 the login page shows the name as "Log in with ...".
-        $name = (int) $CFG->branch >= 503 ? 'magiclinkprovider' : 'getmagiclinkviagmail';
         return [
             [
                 'url' => new \moodle_url('/auth/magic/login.php'),
                 'iconurl' => '',
-                'name' => get_string($name, 'auth_magic'),
+                // A name rather than an action: the Moodle 5.3 login page shows it as "Log in with ...",
+                // other versions and themes on its own.
+                'name' => get_string('magiclinkprovider', 'auth_magic'),
             ],
         ];
     }

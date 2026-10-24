@@ -15,7 +15,7 @@ Changes
 * 2026-10-24 - Bugfix: A login link expiry of 0 (never expires) no longer makes link requests loop forever
 * 2026-10-24 - Bugfix: Single-use links work when another user is logged in
 * 2026-10-24 - Bugfix: No "A required parameter (key) was missing" error after password logins or in themes where the login page script doesn't find the button (issue #6); the button asks for the email address instead
-* 2026-10-24 - Bugfix: The login page button works on Moodle 5.3, where it reads "Log in with a magic link"
+* 2026-10-24 - Bugfix: The login page button works in every theme and on Moodle 5.3; it is now called "Magic link via email" (Moodle 5.3: "Log in with Magic link via email")
 * 2026-10-24 - Bugfix: Emails are matched without regard to case, and emails shared by several accounts match none
 * 2026-10-24 - Improvement: Links are sent by email only, from the no-reply address (issue #8)
 * 2026-10-24 - Improvement: The plugin no longer turns on "Allow log in via email" for password logins

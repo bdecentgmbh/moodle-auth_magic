@@ -8,8 +8,8 @@ pagetypes:
 # Magic authentication — Administrator guide
 
 Magic authentication lets users log in with a link they get by email instead of a password. On the
-login page, users type their email address and click *Get a magic link via email* (from Moodle 5.3:
-*Log in with a magic link*). The link logs them in.
+login page, users type their email address and click *Magic link via email* (in Moodle 5.3:
+*Log in with Magic link via email*). The link logs them in.
 
 This guide covers setting the plugin up and what it does to keep magic links safe. For logging in with
 a link, see the [student guide](student-guide.md).
