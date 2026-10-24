@@ -48,6 +48,15 @@ class behat_auth_magic extends behat_base {
     }
 
     /**
+     * Clicks the magic link button of the login page, whose label differs between Moodle versions.
+     *
+     * @When /^I click on the magic link button$/
+     */
+    public function i_click_on_the_magic_link_button(): void {
+        $this->execute('behat_general::i_click_on', ["a[href$='/auth/magic/login.php']", 'css_element']);
+    }
+
+    /**
      * Opens the magic login link opened last once more.
      *
      * @When /^I open the last magic login link again$/

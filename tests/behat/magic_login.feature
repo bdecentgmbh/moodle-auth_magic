@@ -40,7 +40,7 @@ Feature: Log in with a magic link
     And I should see "User One"
 
   Scenario: A link of another account asks before switching accounts
-    Given I log in as "user_02"
+    Given I open the magic login link of "user_02"
     When I open the magic login link of "user_01"
     Then I should see "You are logged in as User Two. Do you want to log out and log in as User One?"
     And I press "Cancel"
@@ -52,8 +52,10 @@ Feature: Log in with a magic link
     And I should see "User One"
 
   Scenario: The own link of a logged-in user goes on to the site
-    Given I log in as "user_01"
-    When I open the magic login link of "user_01"
+    Given the following config values are set as admin:
+      | loginkeytype | more | auth_magic |
+    And I open the magic login link of "user_01"
+    When I open the last magic login link again
     Then I should not see "Do you want to log out"
     And I visit "/user/profile.php"
     And I should see "User One"

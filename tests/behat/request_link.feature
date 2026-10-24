@@ -16,20 +16,20 @@ Feature: Ask for a magic login link
   Scenario: The answer is the same whether the account exists or not
     Given I visit "/login/index.php"
     When I set the field "Username" to "user_01@example.com"
-    And I click on "Get a magic link via email" "link"
+    And I click on the magic link button
     Then I should see "If you supplied a correct email address, an email containing a magic login link should have been sent to you."
     And I set the field "Username" to "nobody@example.com"
-    And I click on "Get a magic link via email" "link"
+    And I click on the magic link button
     And I should see "If you supplied a correct email address, an email containing a magic login link should have been sent to you."
     And I should not see "not found"
     And I set the field "Username" to "user_01"
-    And I click on "Get a magic link via email" "link"
+    And I click on the magic link button
     And I should see "Invalid email address"
 
   @javascript
   Scenario: Without a username the button asks for the email address
     Given I visit "/login/index.php"
-    When I click on "Get a magic link via email" "link"
+    When I click on the magic link button
     Then I should see "Log in with a magic link"
     And I should see "Enter the email address of your account."
     And I set the field "Email address" to "user_01@example.com"
@@ -48,7 +48,7 @@ Feature: Ask for a magic login link
       | loginoption | 1 | auth_magic |
     And I visit "/login/index.php"
     When I set the field "Username" to "user_01"
-    And I click on "Get a magic link via email" "link"
+    And I click on the magic link button
     Then I should see "If you supplied a correct username, an email containing a magic login link should have been sent to your email address."
     And I visit "/auth/magic/login.php"
     And I should see "Enter the email address or the username of your account."

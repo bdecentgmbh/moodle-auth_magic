@@ -109,6 +109,7 @@ $string['loginoption'] = "Allow Username to get magic link";
 $string['loginoptiondesc'] = "Enable this setting to login using the username provided in the login form.";
 $string['loginsubject'] = '{$a}: Magic authentication via login';
 $string['magiclink'] = "Magic link";
+$string['magiclinkprovider'] = 'a magic link';
 $string['magicloginlink'] = '{$a}: Magic login link';
 $string['magiconly'] = "Magic only";
 $string['manualinfo'] = "Manual enrolments are not available in this course.";

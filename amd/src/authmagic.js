@@ -35,31 +35,14 @@ define([], function() {
     };
 
 
-    AuthMagic.prototype.getMagicLink = function(params, linkId) {
-        var authSelector = linkId + " .potentialidplist a[title=\"" + params.strbutton + "\"]";
-        var MagicLink = "";
-        if (authSelector) {
-            MagicLink = document.querySelectorAll(authSelector)[0];
-            if (MagicLink === undefined) {
-                authSelector = linkId + " .login-identityproviders a";
-                var MagicLinks = document.querySelectorAll(authSelector);
-                if (MagicLinks.length) {
-                    MagicLinks.forEach(function(item) {
-                        var inner = item.innerHTML.trim();
-                        if (inner == params.strbutton) {
-                            MagicLink = item;
-                        }
-                    });
-                }
-            }
-        }
-        return MagicLink;
+    AuthMagic.prototype.getMagicLink = function(params) {
+        // Find the button by its address, its label differs between Moodle versions and themes.
+        return document.querySelector("#page-login-index a[href=\"" + params.linkurl + "\"]");
     };
 
     AuthMagic.prototype.magicLoginHook = function(params) {
         var self = this;
-        var linkId = "#page-login-index";
-        var MagicLink = self.getMagicLink(params, linkId);
+        var MagicLink = self.getMagicLink(params);
         if (MagicLink) {
             self.magicLoginHandler(MagicLink, "form#login #username");
         }

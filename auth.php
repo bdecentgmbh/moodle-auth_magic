@@ -194,11 +194,14 @@ class auth_plugin_magic extends auth_plugin_base {
      * @return array Array of idps.
      */
     public function loginpage_idp_list($wantsurl) {
+        global $CFG;
+        // From Moodle 5.3 the login page shows the name as "Log in with ...".
+        $name = (int) $CFG->branch >= 503 ? 'magiclinkprovider' : 'getmagiclinkviagmail';
         return [
             [
                 'url' => new \moodle_url('/auth/magic/login.php'),
                 'iconurl' => '',
-                'name' => get_string('getmagiclinkviagmail', 'auth_magic'),
+                'name' => get_string($name, 'auth_magic'),
             ],
         ];
     }
@@ -212,7 +215,7 @@ class auth_plugin_magic extends auth_plugin_base {
         $CFG->authloginviaemail = true;
         $params = [
             'loginhook' => true,
-            'strbutton' => get_string('getmagiclinkviagmail', 'auth_magic'),
+            'linkurl' => (new \moodle_url('/auth/magic/login.php'))->out(false),
         ];
         $PAGE->requires->js_call_amd('auth_magic/authmagic', 'init', [$params]);
     }
