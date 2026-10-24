@@ -14,208 +14,189 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-/**
- * Privacy implementation for Magic authentication.
- *
- * @package   auth_magic
- * @copyright bdecent GmbH 2023
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-
 namespace auth_magic\privacy;
 
-use stdClass;
-use context;
 use core_privacy\local\metadata\collection;
-use core_privacy\local\request\contextlist;
-use core_privacy\local\request\userlist;
-use core_privacy\local\request\approved_userlist;
 use core_privacy\local\request\approved_contextlist;
-use core_privacy\local\request\helper;
+use core_privacy\local\request\approved_userlist;
+use core_privacy\local\request\contextlist;
 use core_privacy\local\request\transform;
+use core_privacy\local\request\userlist;
 use core_privacy\local\request\writer;
 
 /**
- * The Magic authentication data export and deletion options.
+ * Privacy provider for magic authentication.
+ *
+ * A user's magic link is a row in auth_magic_loginlinks and a key in the core user_private_key table.
+ * Both live in the user context.
+ *
+ * @package    auth_magic
+ * @copyright  2023 bdecent gmbh <https://bdecent.de>
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class provider implements
     \core_privacy\local\metadata\provider,
     \core_privacy\local\request\core_userlist_provider,
-    \core_privacy\local\request\plugin\provider {
+    \core_privacy\local\request\plugin\provider,
+    \core_privacy\local\request\user_preference_provider {
+    /** @var string Script of the plugin's keys in user_private_key. */
+    private const KEYSCRIPT = 'auth/magic';
+
+    /** @var string Preference with the time of the last link email. */
+    private const LASTEMAILPREFERENCE = 'auth_magic_lastlinkemail';
+
     /**
-     * Get list of the data privacy summary meta strings.
+     * Describe the personal data the plugin stores.
      *
      * @param collection $collection
      * @return collection
      */
     public static function get_metadata(collection $collection): collection {
-        $magicmetadata = [
+        $collection->add_database_table('auth_magic_loginlinks', [
             'userid' => 'privacy:metadata:auth_magic:userid',
-            'parent' => 'privacy:metadata:auth_magic:parent',
-            'magicauth' => 'privacy:metadata:auth_magic:magicauth',
-            'parentrole' => 'privacy:metadata:auth_magic:parentrole',
             'loginuserkey' => 'privacy:metadata:auth_magic:loginuserkey',
-            'invitationuserkey' => 'privacy:metadata:auth_magic:invitationuserkey',
             'magiclogin' => 'privacy:metadata:auth_magic:magiclogin',
-            'magicinvitation' => 'privacy:metadata:auth_magic:magicinvitation',
             'loginexpiry' => 'privacy:metadata:auth_magic:loginexpiry',
-            'invitationexpiry' => 'privacy:metadata:auth_magic:invitationexpiry',
-            'manualexpiry' => 'privacy:metadata:auth_magic:manualexpiry',
             'timecreated' => 'privacy:metadata:auth_magic:timecreated',
             'timemodified' => 'privacy:metadata:auth_magic:timemodified',
-        ];
-        $collection->add_database_table('auth_magic_loginlinks', $magicmetadata, 'privacy:metadata:auth_magic_loginlinks');
-
+        ], 'privacy:metadata:auth_magic_loginlinks');
+        $collection->add_subsystem_link('core_userkey', [], 'privacy:metadata:core_userkey');
+        $collection->add_user_preference(self::LASTEMAILPREFERENCE, 'privacy:metadata:preference:lastlinkemail');
         return $collection;
     }
 
     /**
-     * Get the list of contexts that contain user information for the specified user.
+     * The user context, if the user has a magic link or key.
      *
-     * @param   int           $userid       The user to search.
-     * @return  contextlist   $contextlist  The list of contexts used in this plugin.
+     * @param int $userid
+     * @return contextlist
      */
     public static function get_contexts_for_userid(int $userid): contextlist {
-        $contextlist = new \core_privacy\local\request\contextlist();
         $sql = "SELECT ctx.id
-                  FROM {auth_magic_loginlinks} aml
-                  JOIN {context} ctx ON ctx.instanceid = aml.userid AND ctx.contextlevel = :contextlevel
-                 WHERE aml.userid = :userid";
-        $params = ['userid' => $userid, 'contextlevel' => CONTEXT_USER];
-
+                  FROM {context} ctx
+                 WHERE ctx.contextlevel = :contextlevel AND ctx.instanceid = :userid
+                       AND (EXISTS (SELECT 1 FROM {auth_magic_loginlinks} ml WHERE ml.userid = ctx.instanceid)
+                            OR EXISTS (SELECT 1 FROM {user_private_key} k WHERE k.userid = ctx.instanceid AND k.script = :script))";
         $contextlist = new contextlist();
-        $contextlist->add_from_sql($sql, $params);
+        $contextlist->add_from_sql($sql, [
+            'contextlevel' => CONTEXT_USER,
+            'userid' => $userid,
+            'script' => self::KEYSCRIPT,
+        ]);
         return $contextlist;
     }
 
     /**
-     * Get the list of users who have data within a context.
+     * The user of a user context, if they have a magic link or key.
      *
-     * @param userlist $userlist The userlist containing the list of users who have data in this context/plugin combination.
+     * @param userlist $userlist
      */
     public static function get_users_in_context(userlist $userlist) {
         $context = $userlist->get_context();
-
         if (!$context instanceof \context_user) {
             return;
         }
-        $sql = "SELECT userid
-                    FROM {auth_magic_loginlinks}
-                    WHERE userid = ?";
-        $params = [$context->instanceid];
-        $userlist->add_from_sql('userid', $sql, $params);
+        $userlist->add_from_sql(
+            'userid',
+            'SELECT userid FROM {auth_magic_loginlinks} WHERE userid = :userid',
+            ['userid' => $context->instanceid]
+        );
+        $userlist->add_from_sql(
+            'userid',
+            'SELECT userid FROM {user_private_key} WHERE userid = :userid AND script = :script',
+            ['userid' => $context->instanceid, 'script' => self::KEYSCRIPT]
+        );
     }
 
     /**
-     * Delete multiple users within a single context.
+     * Export the magic link of the user, without the key, which works like a password.
      *
-     * @param approved_userlist $userlist The approved context and user information to delete information for.
+     * @param approved_contextlist $contextlist
      */
-    public static function delete_data_for_users(approved_userlist $userlist) {
+    public static function export_user_data(approved_contextlist $contextlist) {
         global $DB;
-        $context = $userlist->get_context();
-        if ($context instanceof \context_user) {
-            [$userinsql, $userinparams] = $DB->get_in_or_equal($userlist->get_userids(), SQL_PARAMS_NAMED);
-            if (!empty($userinparams)) {
-                $sql = "userid {$userinsql}";
-                $DB->delete_records_select('auth_magic_loginlinks', $sql, $userinparams);
-            }
-        }
-    }
 
-    /**
-     * Delete user notes data for multiple context.
-     *
-     * @param approved_contextlist $contextlist The approved context and user information to delete information for.
-     */
-    public static function delete_data_for_user(approved_contextlist $contextlist) {
-        if (empty($contextlist->count())) {
-            return;
-        }
-        $userid = $contextlist->get_user()->id;
+        $user = $contextlist->get_user();
         foreach ($contextlist->get_contexts() as $context) {
-            if ($context->contextlevel != CONTEXT_USER) {
+            if ($context->contextlevel != CONTEXT_USER || $context->instanceid != $user->id) {
                 continue;
             }
-            if ($context->instanceid == $userid) {
-                // Delete stored user notes.
-                self::delete_user_magicdata($context->instanceid);
+            $subcontext = [get_string('pluginname', 'auth_magic')];
+            $link = $DB->get_record('auth_magic_loginlinks', ['userid' => $user->id]);
+            if ($link) {
+                writer::with_context($context)->export_data($subcontext, (object) [
+                    'loginexpiry' => $link->loginexpiry ? transform::datetime($link->loginexpiry) : get_string('never'),
+                    'timecreated' => transform::datetime($link->timecreated),
+                    'timemodified' => $link->timemodified ? transform::datetime($link->timemodified) : '-',
+                ]);
             }
+            \core_userkey\privacy\provider::export_userkeys($context, $subcontext, self::KEYSCRIPT);
         }
     }
 
     /**
-     * Delete all notes data for all users in the specified context.
+     * Export the time the user was last sent a link email.
      *
-     * @param context $context Context to delete data from.
+     * @param int $userid
      */
-    public static function delete_data_for_all_users_in_context(\context $context) {
-        global $DB;
-        if ($context->contextlevel == CONTEXT_USER) {
-            // Delete all users notes.
+    public static function export_user_preferences(int $userid) {
+        $lastemail = get_user_preferences(self::LASTEMAILPREFERENCE, null, $userid);
+        if ($lastemail !== null) {
+            writer::export_user_preference(
+                'auth_magic',
+                self::LASTEMAILPREFERENCE,
+                transform::datetime($lastemail),
+                get_string('privacy:metadata:preference:lastlinkemail', 'auth_magic')
+            );
+        }
+    }
+
+    /**
+     * Delete the data of the users in a user context.
+     *
+     * @param approved_userlist $userlist
+     */
+    public static function delete_data_for_users(approved_userlist $userlist) {
+        $context = $userlist->get_context();
+        if ($context instanceof \context_user && in_array($context->instanceid, $userlist->get_userids())) {
             self::delete_user_magicdata($context->instanceid);
         }
     }
 
     /**
-     * This does the deletion of user notes data given a userid.
+     * Delete the data of a user.
      *
-     * @param int $userid The user ID
+     * @param approved_contextlist $contextlist
+     */
+    public static function delete_data_for_user(approved_contextlist $contextlist) {
+        $userid = $contextlist->get_user()->id;
+        foreach ($contextlist->get_contexts() as $context) {
+            if ($context->contextlevel == CONTEXT_USER && $context->instanceid == $userid) {
+                self::delete_user_magicdata($userid);
+            }
+        }
+    }
+
+    /**
+     * Delete the data in a context.
+     *
+     * @param \context $context
+     */
+    public static function delete_data_for_all_users_in_context(\context $context) {
+        if ($context->contextlevel == CONTEXT_USER) {
+            self::delete_user_magicdata($context->instanceid);
+        }
+    }
+
+    /**
+     * Delete the magic link, the keys and the preference of a user.
+     *
+     * @param int $userid
      */
     private static function delete_user_magicdata(int $userid) {
         global $DB;
-        if ($DB->delete_records('auth_magic_loginlinks', ['userid' => $userid])) {
-            return true;
-        }
-        return false;
-    }
-    /**
-     * Export all user data for the specified user, in the specified contexts, using the supplied exporter instance.
-     *
-     * @param approved_contextlist $contextlist The approved contexts to export information for.
-     */
-    public static function export_user_data(approved_contextlist $contextlist) {
-        global $DB;
-
-        if (empty($contextlist->count())) {
-            return;
-        }
-        // Context user.
-        $user = $contextlist->get_user();
-
-        // List of user loginlinks stored in table.
-        $loginlinks = $DB->get_records('auth_magic_loginlinks', ['userid' => $user->id]);
-
-        if (empty($loginlinks)) {
-            return;
-        }
-        // Generate the loginlinks list to export.
-        $exportdata = array_map(function ($record) {
-            return [
-                'userid' => transform::user($record->userid),
-                'parent' => $record->parent ? transform::user($record->parent) : get_string('none'),
-                'magicauth' => $record->magicauth,
-                'parentrole' => ($record->parentrole) ? $record->parentrole : get_string('none'),
-                'loginuserkey' => $record->loginuserkey,
-                'invitationuserkey' => $record->invitationuserkey,
-                'magiclogin' => $record->magiclogin,
-                'magicinvitation' => $record->magicinvitation,
-                'loginexpiry' => ($record->loginexpiry) ? transform::datetime($record->loginexpiry) : '-',
-                'invitationexpiry' => ($record->invitationexpiry) ? transform::datetime($record->invitationexpiry) : '-',
-                'timecreated' => ($record->timecreated) ? transform::datetime($record->timecreated) : '-',
-                'timemodified' => ($record->timemodified) ? transform::datetime($record->timemodified) : '-',
-            ];
-        }, $loginlinks);
-
-        if (!empty($exportdata)) {
-            $context = \context_user::instance($user->id);
-            // Fetch the generic module data for the note.
-            $contextdata = helper::get_context_data($context, $user);
-            $contextdata = (object)array_merge((array)$contextdata, $exportdata);
-            writer::with_context($context)->export_data(
-                [get_string('privacy:metadata:auth_magic', 'auth_magic') . ' ' . $user->id],
-                $contextdata
-            );
-        }
+        $DB->delete_records('auth_magic_loginlinks', ['userid' => $userid]);
+        \core_userkey\privacy\provider::delete_userkeys(self::KEYSCRIPT, $userid);
+        unset_user_preference(self::LASTEMAILPREFERENCE, $userid);
     }
 }

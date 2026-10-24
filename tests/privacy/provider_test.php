@@ -14,228 +14,181 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-/**
- * Privacy test for the authentication magic
- *
- * @package    auth_magic
- * @category   test
- * @copyright  2018 Victor Deniz <victor@moodle.com>
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
 namespace auth_magic\privacy;
 
-use auth_magic\privacy\provider;
+use core_privacy\local\metadata\collection;
 use core_privacy\local\request\approved_contextlist;
+use core_privacy\local\request\approved_userlist;
+use core_privacy\local\request\userlist;
 use core_privacy\local\request\writer;
 use core_privacy\tests\provider_testcase;
-use core_privacy\local\request\transform;
-use core_privacy\local\request\approved_userlist;
 
 /**
- * Privacy test for the authentication magic
+ * Privacy tests for magic authentication.
  *
  * @package    auth_magic
  * @category   test
  * @copyright  2023 bdecent gmbh <https://bdecent.de>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+#[\PHPUnit\Framework\Attributes\CoversClass(provider::class)]
 final class provider_test extends provider_testcase {
-    /**
-     * Set up method.
-     */
-    public function setUp(): void {
+    #[\Override]
+    protected function setUp(): void {
         parent::setUp();
-        $this->resetAfterTest(true);
+        $this->resetAfterTest();
     }
 
     /**
-     * Check that a user context is returned if there is any user data for this user.
-     * @covers ::get_contexts_for_userid
+     * The table, the core user keys and the preference are declared.
+     */
+    public function test_get_metadata(): void {
+        $items = provider::get_metadata(new collection('auth_magic'))->get_collection();
+        $names = array_map(fn($item) => $item->get_name(), $items);
+
+        $this->assertContains('auth_magic_loginlinks', $names);
+        $this->assertContains('core_userkey', $names);
+        $this->assertContains('auth_magic_lastlinkemail', $names);
+    }
+
+    /**
+     * Users with a magic link or a key have their user context, others have none.
      */
     public function test_get_contexts_for_userid(): void {
-        global $DB;
+        $magic = $this->getDataGenerator()->create_user(['auth' => 'magic']);
+        $manual = $this->getDataGenerator()->create_user(['auth' => 'manual']);
+        $keyonly = $this->getDataGenerator()->create_user(['auth' => 'manual']);
+        create_user_key('auth/magic', $keyonly->id);
 
-        $user = $this->getDataGenerator()->create_user(['auth' => 'magic']);
-        $contextlist = provider::get_contexts_for_userid($user->id);
-
-        // Check that we only get back one context.
-        $this->assertCount(1, $contextlist);
-
-        // Check that a context is returned is the expected.
-        $usercontext = \context_user::instance($user->id);
-        $this->assertEquals($usercontext->id, $contextlist->get_contextids()[0]);
+        $contextids = provider::get_contexts_for_userid($magic->id)->get_contextids();
+        $this->assertEquals([\context_user::instance($magic->id)->id], $contextids);
+        $this->assertCount(0, provider::get_contexts_for_userid($manual->id));
+        $this->assertCount(1, provider::get_contexts_for_userid($keyonly->id));
     }
 
     /**
-     * Test that user data is exported correctly.
-     * @covers ::export_user_data
-     */
-    public function test_auth_magic_export_user_data(): void {
-        global $DB;
-
-        $user = $this->getDataGenerator()->create_user(['auth' => 'magic']);
-
-        $logrecord = $DB->get_record('auth_magic_loginlinks', ['userid' => $user->id]);
-
-        $usercontext = \context_user::instance($user->id);
-
-        $writer = writer::with_context($usercontext);
-        $this->assertFalse($writer->has_any_data());
-        $approvedlist = new approved_contextlist($user, 'auth_magic', [$usercontext->id]);
-        provider::export_user_data($approvedlist);
-
-        $data = (array) $writer->get_data([get_string('privacy:metadata:auth_magic', 'auth_magic') . ' ' . $logrecord->userid]);
-        $this->assertEquals(transform::datetime($logrecord->loginexpiry), $data[0]['loginexpiry']);
-    }
-
-    /**
-     * Test deleting all user data for a specific context.
-     * @covers ::delete_data_for_all_users_in_context
-     */
-    public function test_delete_data_for_all_users_in_context(): void {
-        global $DB;
-
-        $user1 = $this->getDataGenerator()->create_user(['auth' => 'magic']);
-        $user1context = \context_user::instance($user1->id);
-
-        $user2 = $this->getDataGenerator()->create_user(['auth' => 'magic']);
-
-        // Get all magic login records.
-        $records = $DB->get_records('auth_magic_loginlinks', []);
-        // There should be two.
-        $this->assertCount(2, $records);
-
-        // Delete everything for the first user context.
-        provider::delete_data_for_all_users_in_context($user1context);
-
-        // Get all user1 magic login records.
-        $records = $DB->get_records('auth_magic_loginlinks', ['userid' => $user1->id]);
-        $this->assertCount(0, $records);
-
-        // Get all magic login records.
-        $records = $DB->get_records('auth_magic_loginlinks', []);
-        // There should be one (user2).
-        $this->assertCount(1, $records);
-    }
-
-    /**
-     * This should work identical to the above test.
-     * @covers ::delete_data_for_user
-     */
-    public function test_delete_data_for_user(): void {
-        global $DB;
-
-        $user1 = $this->getDataGenerator()->create_user(['auth' => 'magic']);
-        $user1context = \context_user::instance($user1->id);
-
-        $user2 = $this->getDataGenerator()->create_user(['auth' => 'magic']);
-
-        // Get all magic login records.
-        $records = $DB->get_records('auth_magic_loginlinks', []);
-        // There should be two.
-        $this->assertCount(2, $records);
-
-        // Delete everything for the first user.
-        $approvedlist = new approved_contextlist($user1, 'auth_magic', [$user1context->id]);
-        provider::delete_data_for_user($approvedlist);
-
-        // Get all user1 magic login records.
-        $records = $DB->get_records('auth_magic_loginlinks', ['userid' => $user1->id]);
-        $this->assertCount(0, $records);
-
-        // Get all magic login records.
-        $records = $DB->get_records('auth_magic_loginlinks', []);
-        // There should be one (user2).
-        $this->assertCount(1, $records);
-    }
-
-    /**
-     * Test that only users with a user context are fetched.
-     * @covers ::get_users_in_context
+     * Only the user of a user context is listed, and only if they have a magic link.
      */
     public function test_get_users_in_context(): void {
-        global $DB;
+        $magic = $this->getDataGenerator()->create_user(['auth' => 'magic']);
+        $manual = $this->getDataGenerator()->create_user(['auth' => 'manual']);
 
-        $this->resetAfterTest();
-
-        $component = 'auth_magic';
-        // Create a user.
-        $user = $this->getDataGenerator()->create_user(['auth' => 'magic']);
-        $usercontext = \context_user::instance($user->id);
-
-        // The list of users should not return anything yet (related data still haven't been created).
-        $userlist = new \core_privacy\local\request\userlist($usercontext, $component);
-        // The list of users for user context should return the user.
+        $userlist = new userlist(\context_user::instance($magic->id), 'auth_magic');
         provider::get_users_in_context($userlist);
-        $this->assertCount(1, $userlist);
-        $expected = [$user->id];
-        $actual = $userlist->get_userids();
-        $this->assertEquals($expected, $actual);
+        $this->assertEquals([$magic->id], $userlist->get_userids());
 
-        // The list of users for system context should not return any users.
-        $systemcontext = \context_system::instance();
-        $userlist = new \core_privacy\local\request\userlist($systemcontext, $component);
+        $userlist = new userlist(\context_user::instance($manual->id), 'auth_magic');
+        provider::get_users_in_context($userlist);
+        $this->assertCount(0, $userlist);
+
+        $userlist = new userlist(\context_system::instance(), 'auth_magic');
         provider::get_users_in_context($userlist);
         $this->assertCount(0, $userlist);
     }
 
     /**
-     * Test that data for users in approved userlist is deleted.
-     * @covers ::get_users_in_context
+     * The export has the dates of the link and the keys, but not the key itself.
      */
-    public function test_delete_data_for_users(): void {
+    public function test_export_user_data(): void {
         global $DB;
 
-        $this->resetAfterTest();
+        $user = $this->getDataGenerator()->create_user(['auth' => 'magic']);
+        $link = $DB->get_record('auth_magic_loginlinks', ['userid' => $user->id]);
+        $context = \context_user::instance($user->id);
+        // Core exports the user keys of the current user, who is the user of the export.
+        $this->setUser($user);
 
-        $component = 'auth_magic';
-        // Create user1.
-        $user1 = $this->getDataGenerator()->create_user(['auth' => 'magic']);
-        $usercontext1 = \context_user::instance($user1->id);
-        // Create user2.
-        $user2 = $this->getDataGenerator()->create_user(['auth' => 'magic']);
-        $usercontext2 = \context_user::instance($user2->id);
+        $this->export_context_data_for_user($user->id, $context, 'auth_magic');
 
-        // The list of users for usercontext1 should return user1.
-        $userlist1 = new \core_privacy\local\request\userlist($usercontext1, $component);
-        provider::get_users_in_context($userlist1);
-        $this->assertCount(1, $userlist1);
-        $expected = [$user1->id];
-        $actual = $userlist1->get_userids();
-        $this->assertEquals($expected, $actual);
+        $writer = writer::with_context($context);
+        $subcontext = [get_string('pluginname', 'auth_magic')];
+        $data = $writer->get_data($subcontext);
+        $keys = $writer->get_related_data($subcontext, 'userkeys');
+        $this->assertNotEmpty($data->loginexpiry);
+        $this->assertNotEmpty($data->timecreated);
+        $this->assertCount(1, $keys->keys);
+        $this->assertStringNotContainsString($link->loginuserkey, json_encode([$data, $keys]));
+    }
 
-        // The list of users for usercontext2 should return user2.
-        $userlist2 = new \core_privacy\local\request\userlist($usercontext2, $component);
-        provider::get_users_in_context($userlist2);
-        $this->assertCount(1, $userlist2);
-        $expected = [$user2->id];
-        $actual = $userlist2->get_userids();
-        $this->assertEquals($expected, $actual);
+    /**
+     * The time of the last link email is exported.
+     */
+    public function test_export_user_preferences(): void {
+        $user = $this->getDataGenerator()->create_user(['auth' => 'magic']);
+        provider::export_user_preferences($user->id);
+        $this->assertFalse(writer::with_context(\context_system::instance())->has_any_data());
 
-        // Add userlist1 to the approved user list.
-        $approvedlist = new approved_userlist($usercontext1, $component, $userlist1->get_userids());
+        set_user_preference('auth_magic_lastlinkemail', time(), $user);
+        provider::export_user_preferences($user->id);
+        $preferences = writer::with_context(\context_system::instance())->get_user_preferences('auth_magic');
+        $this->assertObjectHasProperty('auth_magic_lastlinkemail', $preferences);
+    }
 
-        // Delete user data using delete_data_for_user for usercontext1.
-        provider::delete_data_for_users($approvedlist);
+    /**
+     * Deleting the data of a user removes their link, keys and preference, and nothing of others.
+     */
+    public function test_delete_data_for_user(): void {
+        [$user1, $user2] = $this->create_users_with_data();
 
-        // Re-fetch users in usercontext1 - The user list should now be empty.
-        $userlist1 = new \core_privacy\local\request\userlist($usercontext1, $component);
-        provider::get_users_in_context($userlist1);
-        $this->assertCount(0, $userlist1);
-        // Re-fetch users in usercontext2 - The user list should not be empty (user2).
-        $userlist2 = new \core_privacy\local\request\userlist($usercontext2, $component);
-        provider::get_users_in_context($userlist2);
-        $this->assertCount(1, $userlist2);
+        $contextids = [\context_user::instance($user1->id)->id];
+        provider::delete_data_for_user(new approved_contextlist($user1, 'auth_magic', $contextids));
 
-        // User data should be only removed in the user context.
-        $systemcontext = \context_system::instance();
-        // Add userlist2 to the approved user list in the system context.
-        $approvedlist = new approved_userlist($systemcontext, $component, $userlist2->get_userids());
-        // Delete user1 data using delete_data_for_user.
-        provider::delete_data_for_users($approvedlist);
-        // Re-fetch users in usercontext2 - The user list should not be empty (user2).
-        $userlist2 = new \core_privacy\local\request\userlist($usercontext2, $component);
-        provider::get_users_in_context($userlist2);
-        $this->assertCount(1, $userlist2);
+        $this->assert_user_has_data($user1, false);
+        $this->assert_user_has_data($user2, true);
+    }
+
+    /**
+     * Deleting the data in a user context removes the data of that user.
+     */
+    public function test_delete_data_for_all_users_in_context(): void {
+        [$user1, $user2] = $this->create_users_with_data();
+
+        provider::delete_data_for_all_users_in_context(\context_user::instance($user1->id));
+        provider::delete_data_for_all_users_in_context(\context_system::instance());
+
+        $this->assert_user_has_data($user1, false);
+        $this->assert_user_has_data($user2, true);
+    }
+
+    /**
+     * Deleting the data of approved users only works in their own user context.
+     */
+    public function test_delete_data_for_users(): void {
+        [$user1, $user2] = $this->create_users_with_data();
+
+        provider::delete_data_for_users(new approved_userlist(\context_system::instance(), 'auth_magic', [$user2->id]));
+        provider::delete_data_for_users(new approved_userlist(\context_user::instance($user1->id), 'auth_magic', [$user1->id]));
+
+        $this->assert_user_has_data($user1, false);
+        $this->assert_user_has_data($user2, true);
+    }
+
+    /**
+     * Create two magic users who were sent a link email.
+     *
+     * @return \stdClass[]
+     */
+    protected function create_users_with_data(): array {
+        $users = [];
+        for ($i = 0; $i < 2; $i++) {
+            $user = $this->getDataGenerator()->create_user(['auth' => 'magic']);
+            set_user_preference('auth_magic_lastlinkemail', time(), $user);
+            $users[] = $user;
+        }
+        return $users;
+    }
+
+    /**
+     * Assert whether a user still has a magic link, keys and the preference.
+     *
+     * @param \stdClass $user
+     * @param bool $expected
+     */
+    protected function assert_user_has_data(\stdClass $user, bool $expected): void {
+        global $DB;
+        $this->assertEquals($expected, $DB->record_exists('auth_magic_loginlinks', ['userid' => $user->id]));
+        $this->assertEquals($expected, $DB->record_exists('user_private_key', ['userid' => $user->id, 'script' => 'auth/magic']));
+        $preference = ['userid' => $user->id, 'name' => 'auth_magic_lastlinkemail'];
+        $this->assertEquals($expected, $DB->record_exists('user_preferences', $preference));
     }
 }

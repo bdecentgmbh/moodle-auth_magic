@@ -287,4 +287,22 @@ final class auth_magic_test extends \advanced_testcase {
         $this->assertFalse($DB->record_exists('auth_magic_loginlinks', ['userid' => $user->id]));
         $this->assertFalse($DB->record_exists('user_private_key', ['userid' => $user->id, 'script' => 'auth/magic']));
     }
+
+    /**
+     * Uninstalling removes the keys and the preference that core doesn't remove.
+     */
+    public function test_uninstall_removes_keys(): void {
+        global $CFG, $DB;
+        require_once($CFG->dirroot . '/auth/magic/db/uninstall.php');
+
+        $user = $this->getDataGenerator()->create_user(['auth' => 'magic']);
+        set_user_preference('auth_magic_lastlinkemail', time(), $user);
+        $otherkey = create_user_key('core_files', $user->id);
+
+        xmldb_auth_magic_uninstall();
+
+        $this->assertFalse($DB->record_exists('user_private_key', ['script' => 'auth/magic']));
+        $this->assertFalse($DB->record_exists('user_preferences', ['name' => 'auth_magic_lastlinkemail']));
+        $this->assertTrue($DB->record_exists('user_private_key', ['value' => $otherkey]));
+    }
 }
