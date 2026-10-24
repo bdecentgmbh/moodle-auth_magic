@@ -49,6 +49,77 @@ for a link.
 Accounts with another login method that ask for a link while the plugin supports magic only get an
 email that tells them to use their password, with a link to *Forgotten password*.
 
+## Behaviour overview
+
+How the plugin treats an account depends on the account's login method and on two settings:
+*Supported authentication method* and *Supports password*.
+
+### Asking for a link
+
+What the account gets by email when somebody asks for a link for it. The visitor always sees the same
+answer (see *How links are kept safe*), and an account gets at most one email per *Minimum time
+between magic link emails*.
+
+| Account | Magic only | Any method |
+|---|---|---|
+| Magic authentication | Magic link | Magic link |
+| Other enabled login method (Manual accounts, Email-based self-registration, OAuth 2, LDAP, LTI, …) | Notice to log in with its password | Magic link |
+| Login method whose plugin is disabled | Notice to log in with its password | Notice to log in with its password |
+| No login, Web services, the guest account | Nothing | Nothing |
+| Suspended or unconfirmed | Nothing | Nothing |
+| No account, a deleted account, an email shared by several accounts | Nothing | Nothing |
+
+### Using a link
+
+Whether a link that is valid (not expired, not used yet if links work only once) logs the account in.
+
+| Account | Magic only | Any method |
+|---|---|---|
+| Magic authentication | Yes | Yes |
+| Other enabled login method | No, the link is refused and deleted | Yes |
+| Login method whose plugin is disabled | No, the link is refused and deleted | No, the link is refused and deleted |
+| Web services, the guest account | No, the link is refused and deleted | No, the link is refused and deleted |
+| No login, suspended, unconfirmed | No, Moodle refuses the account | No, Moodle refuses the account |
+
+In every case:
+
+- **An expired link** sends a new one by email (at most once per *Minimum time between magic link
+  emails*) and says so on the login page, if the account may still use links.
+- **A used, replaced or deleted link** says on the login page that it is no longer valid.
+- **If somebody else is logged in**, they are asked before they are logged out.
+
+### Passwords
+
+*Supports password* affects magic accounts only. Accounts with other login methods keep the password
+rules of their own method.
+
+| Magic account | Supports password off | Supports password on |
+|---|---|---|
+| Log in with a password | No | Yes |
+| *Change password* under *Preferences* | Not offered | Offered |
+| *Forgotten password* | Moodle emails that passwords can't be reset | Reset link by email |
+| Admins set the password under *Edit profile* | Field disabled | Yes |
+| New passwords are stored | No | Yes |
+
+Passwords stored while *Supports password* was on are kept when it is turned off, and work again
+when it is turned back on. Accounts created while it was off have no password until they reset it.
+
+### Other settings
+
+| Setting | Value | Effect |
+|---|---|---|
+| Magic login link expiry | A duration | A link works for that long |
+| | 0 | Links never expire |
+| Configure login key link | Only once | A link logs in once, then it is no longer valid |
+| | Until it expires | A link logs in as often as needed until it expires |
+| Allow Username to get magic link | Off | Only email addresses. A username gets "Invalid email address" |
+| | On | Email addresses and usernames |
+| Minimum time between magic link emails | A duration | At most one email per account within that time |
+| | 0 | No limit |
+| *Protect usernames* (core, *Site security settings*) | On (default) | The same answer for every request |
+| | Off | Unknown email addresses and usernames are reported as not found |
+| *Allow log in via email* (core, *Manage authentication*) | On or off | Only affects password logins. Link requests always accept email addresses |
+
 ## How links are kept safe
 
 - **No account probing.** The answer to a link request is the same whether an account exists or not:
