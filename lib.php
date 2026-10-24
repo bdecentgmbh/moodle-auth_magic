@@ -165,15 +165,51 @@ function auth_magic_requiredmail_magic_authentication($userid) {
 }
 
 /**
- * Get magic email user.
- * @param string $email
- * @return stdclass user
+ * Find the local account for an email address, or for a username if the plugin allows usernames.
+ *
+ * Emails are matched case-insensitively, like the core login. An email that several accounts share
+ * matches none of them.
+ *
+ * @param string $email Email address or username
+ * @return stdClass|null user
  */
 function auth_magic_get_email_user($email) {
-    global $DB;
-    $user = $DB->get_record('user', ['email' => $email]);
-    if (!$user && get_config('auth_magic', 'loginoption')) {
-        $user = $DB->get_record('user', ['username' => $email]);
+    global $CFG, $DB;
+
+    $value = trim($email);
+    if ($value === '') {
+        return null;
     }
-    return !empty($user) ? $user : null;
+    $params = ['mnethostid' => $CFG->mnet_localhost_id];
+    $users = [];
+    if (validate_email($value)) {
+        $select = $DB->sql_equal('email', ':email', false) . ' AND mnethostid = :mnethostid AND deleted = 0';
+        $users = $DB->get_records_select('user', $select, $params + ['email' => $value], 'id', '*', 0, 2);
+    }
+    if (!$users && get_config('auth_magic', 'loginoption')) {
+        $select = 'username = :username AND mnethostid = :mnethostid AND deleted = 0';
+        $params['username'] = core_text::strtolower($value);
+        $users = $DB->get_records_select('user', $select, $params, 'id', '*', 0, 2);
+    }
+    return count($users) === 1 ? reset($users) : null;
+}
+
+/**
+ * Answer a request for a magic link made for an existing account.
+ *
+ * The account gets a magic link, or a reminder to use its own login method if it may not use
+ * magic links. Suspended and unconfirmed accounts get nothing.
+ *
+ * @param stdClass $user
+ */
+function auth_magic_process_link_request(stdClass $user): void {
+    if (!empty($user->deleted) || !empty($user->suspended) || empty($user->confirmed) || $user->auth === 'nologin') {
+        return;
+    }
+    $auth = get_auth_plugin('magic');
+    if ($auth->can_login_with_link($user)) {
+        auth_magic_sent_loginlink_touser($user->id, $user->auth !== 'magic');
+    } else {
+        auth_magic_requiredmail_magic_authentication($user->id);
+    }
 }

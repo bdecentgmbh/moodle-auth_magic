@@ -33,73 +33,31 @@ $PAGE->set_context(context_system::instance());
 $PAGE->set_url('/auth/magic/login.php');
 $magiclogin = optional_param('magiclogin', 0, PARAM_INT);
 
-// Ajax using sent login link via email.
+// A request for a magic link, posted from the login page.
 if ($magiclogin) {
-    $errormsg = '';
-    $uservalue = optional_param('uservalue', '', PARAM_NOTAGS);
-    $email = $uservalue;
-    $loginoption = get_config('auth_magic', 'loginoption');
-    if ($user = $DB->get_record('user', ['email' => $uservalue])) {
-        $email = $user->email;
-        $usermessage = get_string('sentlinktouser', 'auth_magic');
-    }
-    if ($loginoption == true) {
-        if ($user = $DB->get_record('user', ['username' => $uservalue])) {
-            $email = $user->email;
-            $usermessage = get_string('sentlinktousername', 'auth_magic');
-        }
+    $uservalue = trim(optional_param('uservalue', '', PARAM_NOTAGS));
+    $isemail = validate_email($uservalue);
+    if (!$isemail && ($uservalue === '' || !get_config('auth_magic', 'loginoption'))) {
+        $SESSION->loginerrormsg = get_string('invalidemail');
+        redirect(get_login_url());
     }
 
-    if (!validate_email($email)) {
-        $errormsg = get_string('invalidemail');
-    } else {
-        // Make a case-insensitive query for the given email address.
-        $select = $DB->sql_equal('email', ':email', false) . ' AND mnethostid = :mnethostid';
-        $params = [
-            'email' => $email,
-            'mnethostid' => $CFG->mnet_localhost_id,
-        ];
-        if (!$DB->record_exists_select('user', $select, $params)) {
-            $errormsg = get_string('emailnotexists', 'auth_magic');
-        }
+    $user = auth_magic_get_email_user($uservalue);
+    if (!$user && empty($CFG->protectusernames)) {
+        // The site allows telling visitors that there is no such account.
+        $SESSION->loginerrormsg = get_string($isemail ? 'emailnotfound' : 'usernamenotfound');
+        redirect(get_login_url());
     }
-
-    if (!empty($errormsg)) {
-        $SESSION->loginerrormsg = $errormsg;
-    } else if (!isloggedin()) {
-        $user = $DB->get_record('user', ['email' => $email]);
-        if (!$user->deleted  && !$user->suspended) {
-            $accessauthtoall = get_config('auth_magic', 'authmethod');
-            if (empty($CFG->rememberusername)) {
-                // No permanent cookies, delete old one if exists.
-                set_moodle_cookie('');
-            } else {
-                set_moodle_cookie($user->username);
-            }
-            if ($user->auth == 'magic' || $accessauthtoall) {
-                $otherauth = ($user->auth != 'magic') ? true : false;
-                if (auth_magic_sent_loginlink_touser($user->id, $otherauth)) {
-                    // Check the login option is enabled.
-                    redirect(
-                        get_login_url(),
-                        $usermessage,
-                        null,
-                        \core\output\notification::NOTIFY_SUCCESS
-                    );
-                }
-            } else {
-                // Doesn't access the user for another auth method.
-                auth_magic_requiredmail_magic_authentication($user->id);
-                redirect(
-                    get_login_url(),
-                    $usermessage,
-                    null,
-                    \core\output\notification::NOTIFY_SUCCESS
-                );
-            }
-        }
+    if ($user && (!isloggedin() || isguestuser())) {
+        auth_magic_process_link_request($user);
     }
-    redirect(get_login_url());
+    // The same answer for every account, so that it doesn't tell whether the account exists.
+    redirect(
+        get_login_url(),
+        get_string($isemail ? 'sentlinktouser' : 'sentlinktousername', 'auth_magic'),
+        null,
+        \core\output\notification::NOTIFY_SUCCESS
+    );
 }
 
 $auth = get_auth_plugin('magic');
@@ -140,5 +98,10 @@ if (!$user = get_complete_user_data('id', $user->id)) {
 complete_user_login($user);
 
 \core\session\manager::apply_concurrent_login_limit($user->id, session_id());
+
+// Remember the username for the login form, as a password login does.
+if (empty($CFG->nolastloggedin)) {
+    set_moodle_cookie(empty($CFG->rememberusername) ? '' : $USER->username);
+}
 
 redirect($redirecturl);

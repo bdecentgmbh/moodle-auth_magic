@@ -168,6 +168,18 @@ class auth_plugin_magic extends auth_plugin_base {
     }
 
     /**
+     * Whether the user may log in with a magic link.
+     *
+     * Magic accounts always may. Accounts with other login methods may if the plugin supports any method.
+     *
+     * @param stdClass $user
+     * @return bool
+     */
+    public function can_login_with_link(stdClass $user): bool {
+        return $user->auth === $this->authtype || !empty(get_config('auth_magic', 'authmethod'));
+    }
+
+    /**
      * Get plugin config data.
      * @return stdClass data
      */
