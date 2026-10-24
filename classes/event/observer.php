@@ -25,23 +25,20 @@ namespace auth_magic\event;
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot. "/auth/magic/auth.php");
-require_once($CFG->dirroot. "/auth/magic/lib.php");
+require_once($CFG->dirroot . "/auth/magic/auth.php");
+require_once($CFG->dirroot . "/auth/magic/lib.php");
 
 /**
  * Event observer for auth_magic.
  */
 class observer {
-
     /**
      * Create user data creation request when the user is created.
      *
      * @param \core\event\user_created $event
      */
     public static function created_user_data_request(\core\event\user_created $event) {
-        global $USER, $CFG;
         $userid = $event->objectid;
-        $usercontext = \context_user::instance($userid);
         $user = \core_user::get_user($userid);
         if ($user->auth == 'magic') {
             $auth = get_auth_plugin('magic');
@@ -61,7 +58,7 @@ class observer {
     public static function create_delete_data_request(\core\event\user_deleted $event) {
         global $DB;
         $userid = $event->objectid;
-        $DB->delete_records('auth_magic_loginlinks', array('userid' => $userid));
+        $DB->delete_records('auth_magic_loginlinks', ['userid' => $userid]);
         delete_user_key('auth/magic', $userid);
         return true;
     }
@@ -74,9 +71,7 @@ class observer {
      * @return bool
      */
     public static function create_update_data_request(\core\event\user_updated $event) {
-        global $DB, $USER, $CFG;
         $userid = $event->objectid;
-        $usercontext = \context_user::instance($userid);
         $user = \core_user::get_user($userid);
         if ($user->auth == 'magic') {
             $auth = get_auth_plugin('magic');

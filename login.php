@@ -22,11 +22,12 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-use block_mockblock\search\area;
-require_once(__DIR__.'/../../config.php');
-require_once($CFG->dirroot."/auth/magic/lib.php");
+// This is a login page, so it can't require a login.
+// phpcs:ignore moodle.Files.RequireLogin.Missing
+require_once(__DIR__ . '/../../config.php');
+require_once($CFG->dirroot . "/auth/magic/lib.php");
 if (!is_enabled_auth('magic')) {
-    throw new moodle_exception(get_string('pluginisdisabled', 'auth_magic'));
+    throw new moodle_exception('pluginisdisabled', 'auth_magic');
 }
 $PAGE->set_context(context_system::instance());
 $PAGE->set_url('/auth/magic/login.php');
@@ -38,12 +39,12 @@ if ($magiclogin) {
     $uservalue = optional_param('uservalue', '', PARAM_NOTAGS);
     $email = $uservalue;
     $loginoption = get_config('auth_magic', 'loginoption');
-    if ($user = $DB->get_record('user', array('email' => $uservalue))) {
+    if ($user = $DB->get_record('user', ['email' => $uservalue])) {
         $email = $user->email;
         $usermessage = get_string('sentlinktouser', 'auth_magic');
     }
     if ($loginoption == true) {
-        if ($user = $DB->get_record('user', array('username' => $uservalue))) {
+        if ($user = $DB->get_record('user', ['username' => $uservalue])) {
             $email = $user->email;
             $usermessage = get_string('sentlinktousername', 'auth_magic');
         }
@@ -54,10 +55,10 @@ if ($magiclogin) {
     } else {
         // Make a case-insensitive query for the given email address.
         $select = $DB->sql_equal('email', ':email', false) . ' AND mnethostid = :mnethostid';
-        $params = array(
+        $params = [
             'email' => $email,
             'mnethostid' => $CFG->mnet_localhost_id,
-        );
+        ];
         if (!$DB->record_exists_select('user', $select, $params)) {
             $errormsg = get_string('emailnotexists', 'auth_magic');
         }
@@ -66,7 +67,7 @@ if ($magiclogin) {
     if (!empty($errormsg)) {
         $SESSION->loginerrormsg = $errormsg;
     } else if (!isloggedin()) {
-        $user = $DB->get_record('user', array('email' => $email));
+        $user = $DB->get_record('user', ['email' => $email]);
         if (!$user->deleted  && !$user->suspended) {
             $accessauthtoall = get_config('auth_magic', 'authmethod');
             if (empty($CFG->rememberusername)) {
@@ -79,14 +80,22 @@ if ($magiclogin) {
                 $otherauth = ($user->auth != 'magic') ? true : false;
                 if (auth_magic_sent_loginlink_touser($user->id, $otherauth)) {
                     // Check the login option is enabled.
-                    redirect(get_login_url(),  $usermessage,
-                        null, \core\output\notification::NOTIFY_SUCCESS);
+                    redirect(
+                        get_login_url(),
+                        $usermessage,
+                        null,
+                        \core\output\notification::NOTIFY_SUCCESS
+                    );
                 }
             } else {
                 // Doesn't access the user for another auth method.
                 auth_magic_requiredmail_magic_authentication($user->id);
-                redirect(get_login_url(),  $usermessage,
-                null, \core\output\notification::NOTIFY_SUCCESS);
+                redirect(
+                    get_login_url(),
+                    $usermessage,
+                    null,
+                    \core\output\notification::NOTIFY_SUCCESS
+                );
             }
         }
     }
@@ -108,13 +117,13 @@ $auth->check_userkey_type($keyvalue);
 $key = validate_user_key($keyvalue, 'auth/magic', null);
 if (get_config('auth_magic', 'loginkeytype') == 'once') {
     delete_user_key('auth/magic', $key->userid);
-    $DB->delete_records('auth_magic_loginlinks', array('userid' => $key->userid));
+    $DB->delete_records('auth_magic_loginlinks', ['userid' => $key->userid]);
 }
 if (isloggedin() && !isguestuser()) {
     if ($USER->id != $key->userid) {
         // Logout the current user if it's different to one that associated to the valid key.
         require_logout();
-        redirect(new moodle_url($PAGE->url, array('key' => $key->value)));
+        redirect(new moodle_url($PAGE->url, ['key' => $key->value]));
     } else {
         // Don't process further if the user is already logged in.
         redirect($redirecturl);

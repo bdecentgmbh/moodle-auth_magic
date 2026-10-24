@@ -13,6 +13,7 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
 /**
  * Privacy test for the authentication magic
  *
@@ -38,11 +39,12 @@ use core_privacy\local\request\approved_userlist;
  * @copyright  2023 bdecent gmbh <https://bdecent.de>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class provider_test extends provider_testcase {
+final class provider_test extends provider_testcase {
     /**
      * Set up method.
      */
     public function setUp(): void {
+        parent::setUp();
         $this->resetAfterTest(true);
     }
 
@@ -50,7 +52,7 @@ class provider_test extends provider_testcase {
      * Check that a user context is returned if there is any user data for this user.
      * @covers ::get_contexts_for_userid
      */
-    public function test_get_contexts_for_userid() {
+    public function test_get_contexts_for_userid(): void {
         global $DB;
 
         $user = $this->getDataGenerator()->create_user(['auth' => 'magic']);
@@ -68,12 +70,12 @@ class provider_test extends provider_testcase {
      * Test that user data is exported correctly.
      * @covers ::export_user_data
      */
-    public function test_auth_magic_export_user_data() {
+    public function test_auth_magic_export_user_data(): void {
         global $DB;
 
         $user = $this->getDataGenerator()->create_user(['auth' => 'magic']);
 
-        $logrecord = $DB->get_record('auth_magic_loginlinks', array('userid' => $user->id));
+        $logrecord = $DB->get_record('auth_magic_loginlinks', ['userid' => $user->id]);
 
         $usercontext = \context_user::instance($user->id);
 
@@ -82,7 +84,7 @@ class provider_test extends provider_testcase {
         $approvedlist = new approved_contextlist($user, 'auth_magic', [$usercontext->id]);
         provider::export_user_data($approvedlist);
 
-        $data = (array) $writer->get_data([get_string('privacy:metadata:auth_magic', 'auth_magic').' '.$logrecord->userid]);
+        $data = (array) $writer->get_data([get_string('privacy:metadata:auth_magic', 'auth_magic') . ' ' . $logrecord->userid]);
         $this->assertEquals(transform::datetime($logrecord->loginexpiry), $data[0]['loginexpiry']);
     }
 
@@ -90,7 +92,7 @@ class provider_test extends provider_testcase {
      * Test deleting all user data for a specific context.
      * @covers ::delete_data_for_all_users_in_context
      */
-    public function test_delete_data_for_all_users_in_context() {
+    public function test_delete_data_for_all_users_in_context(): void {
         global $DB;
 
         $user1 = $this->getDataGenerator()->create_user(['auth' => 'magic']);
@@ -99,7 +101,7 @@ class provider_test extends provider_testcase {
         $user2 = $this->getDataGenerator()->create_user(['auth' => 'magic']);
 
         // Get all magic login records.
-        $records = $DB->get_records('auth_magic_loginlinks', array());
+        $records = $DB->get_records('auth_magic_loginlinks', []);
         // There should be two.
         $this->assertCount(2, $records);
 
@@ -111,7 +113,7 @@ class provider_test extends provider_testcase {
         $this->assertCount(0, $records);
 
         // Get all magic login records.
-        $records = $DB->get_records('auth_magic_loginlinks', array());
+        $records = $DB->get_records('auth_magic_loginlinks', []);
         // There should be one (user2).
         $this->assertCount(1, $records);
     }
@@ -120,7 +122,7 @@ class provider_test extends provider_testcase {
      * This should work identical to the above test.
      * @covers ::delete_data_for_user
      */
-    public function test_delete_data_for_user() {
+    public function test_delete_data_for_user(): void {
         global $DB;
 
         $user1 = $this->getDataGenerator()->create_user(['auth' => 'magic']);
@@ -129,7 +131,7 @@ class provider_test extends provider_testcase {
         $user2 = $this->getDataGenerator()->create_user(['auth' => 'magic']);
 
         // Get all magic login records.
-        $records = $DB->get_records('auth_magic_loginlinks', array());
+        $records = $DB->get_records('auth_magic_loginlinks', []);
         // There should be two.
         $this->assertCount(2, $records);
 
@@ -142,7 +144,7 @@ class provider_test extends provider_testcase {
         $this->assertCount(0, $records);
 
         // Get all magic login records.
-        $records = $DB->get_records('auth_magic_loginlinks', array());
+        $records = $DB->get_records('auth_magic_loginlinks', []);
         // There should be one (user2).
         $this->assertCount(1, $records);
     }
@@ -151,7 +153,7 @@ class provider_test extends provider_testcase {
      * Test that only users with a user context are fetched.
      * @covers ::get_users_in_context
      */
-    public function test_get_users_in_context() {
+    public function test_get_users_in_context(): void {
         global $DB;
 
         $this->resetAfterTest();
@@ -181,7 +183,7 @@ class provider_test extends provider_testcase {
      * Test that data for users in approved userlist is deleted.
      * @covers ::get_users_in_context
      */
-    public function test_delete_data_for_users() {
+    public function test_delete_data_for_users(): void {
         global $DB;
 
         $this->resetAfterTest();

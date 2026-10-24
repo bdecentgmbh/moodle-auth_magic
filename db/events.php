@@ -35,5 +35,5 @@ $observers = [
     [
         'eventname' => '\core\event\user_updated',
         'callback' => '\auth_magic\event\observer::create_update_data_request',
-    ]
+    ],
 ];

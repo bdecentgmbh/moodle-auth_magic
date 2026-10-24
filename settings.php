@@ -23,10 +23,9 @@
  */
 
 defined('MOODLE_INTERNAL') || die;
-require_once($CFG->dirroot."/auth/magic/lib.php");
+require_once($CFG->dirroot . "/auth/magic/lib.php");
 
 if ($ADMIN->fulltree) {
-
     // Support password.
     $name = "auth_magic/supportpassword";
     $title = get_string("strsupportpassword", "auth_magic");
@@ -46,7 +45,7 @@ if ($ADMIN->fulltree) {
     $desc = get_string("loginkeytype_desc", "auth_magic");
     $options = [
         'once' => get_string('keyuseonce', 'auth_magic'),
-        'more' => get_string('keyusemultiple', 'auth_magic')
+        'more' => get_string('keyusemultiple', 'auth_magic'),
     ];
     $setting = new admin_setting_configselect($name, $title, $desc, 'once', $options);
     $settings->add($setting);

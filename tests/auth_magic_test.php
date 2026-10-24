@@ -29,8 +29,7 @@ use stdClass;
 /**
  * Magic authendication test cases defined.
  */
-class auth_magic_test extends \advanced_testcase {
-
+final class auth_magic_test extends \advanced_testcase {
     /**
      * Authendication object
      * @var object
@@ -68,8 +67,8 @@ class auth_magic_test extends \advanced_testcase {
      */
     public function setup(): void {
         global $CFG;
-        require_once($CFG->dirroot."/auth/magic/auth.php");
-        require_once($CFG->dirroot."/auth/magic/lib.php");
+        require_once($CFG->dirroot . "/auth/magic/auth.php");
+        require_once($CFG->dirroot . "/auth/magic/lib.php");
         $this->resetAfterTest(true);
         $this->setAdminUser();
         $this->auth = new \auth_plugin_magic();
@@ -77,14 +76,13 @@ class auth_magic_test extends \advanced_testcase {
         $this->user1 = $this->generator->create_user(['auth' => 'magic']);
         $this->user2 = $this->generator->create_user(['auth' => 'magic']);
         $this->user3 = $this->generator->create_user(['auth' => 'magic']);
-
     }
 
     /**
      * Test that magic users can't login.
      * @covers ::users_can_not_login
      */
-    public function test_users_can_not_login() {
+    public function test_users_can_not_login(): void {
         $user = new stdClass();
         $user->auth = 'magic';
         $user->username = 'user';
@@ -97,10 +95,10 @@ class auth_magic_test extends \advanced_testcase {
      * Test create_user_key.
      * @covers ::create_user_key
      */
-    public function test_create_user_key() {
+    public function test_create_user_key(): void {
         global $DB;
         $key = $this->auth->create_user_key($this->user3->id, 0);
-        $userkeys = $DB->get_records('user_private_key', array('userid' => $this->user3->id));
+        $userkeys = $DB->get_records('user_private_key', ['userid' => $this->user3->id]);
         $this->assertTrue(count($userkeys) > 0);
     }
 
@@ -108,11 +106,11 @@ class auth_magic_test extends \advanced_testcase {
      * Test user_delete_keys.
      * @covers ::user_delete_keys
      */
-    public function test_user_delete_keys() {
+    public function test_user_delete_keys(): void {
         global $DB;
         $this->auth->create_user_key($this->user1->id, 0);
         $this->auth->delete_keys($this->user1->id);
-        $userkeys = $DB->get_records('user_private_key', array('userid' => $this->user1->id));
+        $userkeys = $DB->get_records('user_private_key', ['userid' => $this->user1->id]);
         $this->assertTrue(count($userkeys) == 0);
     }
 
@@ -121,17 +119,17 @@ class auth_magic_test extends \advanced_testcase {
      * Test create_magic_instance.
      * @covers ::create_magic_instance
      */
-    public function test_create_magic_instance() {
+    public function test_create_magic_instance(): void {
         global $DB;
         $user1 = $this->generator->create_user(['auth' => 'manual']);
         $user2 = $this->generator->create_user(['auth' => 'magic']);
-        $user1keys = $DB->get_records('user_private_key', array('userid' => $user1->id));
-        $user2keys = $DB->get_records('user_private_key', array('userid' => $user2->id));
+        $user1keys = $DB->get_records('user_private_key', ['userid' => $user1->id]);
+        $user2keys = $DB->get_records('user_private_key', ['userid' => $user2->id]);
         $this->assertTrue(count($user1keys) == 0);
         $this->assertTrue(count($user2keys) > 0);
         $this->auth->create_magic_instance($user1, true);
-        $user1magicinstances = $DB->get_records('auth_magic_loginlinks', array('userid' => $user1->id));
-        $user1keys = $DB->get_records('user_private_key', array('userid' => $user1->id));
+        $user1magicinstances = $DB->get_records('auth_magic_loginlinks', ['userid' => $user1->id]);
+        $user1keys = $DB->get_records('user_private_key', ['userid' => $user1->id]);
         $this->assertTrue(count($user1magicinstances) > 0);
         $this->assertFalse(count($user1magicinstances) == 0);
         $this->assertTrue(count($user1keys) > 0);
