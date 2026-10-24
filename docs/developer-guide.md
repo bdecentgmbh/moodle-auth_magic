@@ -80,3 +80,18 @@ The 2026102400 upgrade step deletes invitation keys, which free never sends; Pro
 |---|---|
 | PHPUnit | `tests/lib_test.php`, `tests/auth_magic_test.php`, `tests/privacy/provider_test.php` |
 | Behat | `tests/behat/request_link.feature`, `tests/behat/magic_login.feature`; steps in `tests/behat/behat_auth_magic.php` read the links from the database, as Behat sends no emails |
+
+## Releasing
+
+`.github/workflows/moodle-release.yml` publishes a version to the Moodle Marketplace and creates the
+GitHub Release with the ZIP:
+
+1. Merge `dev` into `main` and wait for *Moodle plugin CI* on `main`.
+2. Push a tag `v<release>` or `v<release>-r<n>` on `main`, for example `v1.7-r1` for
+   `$plugin->release = '1.7'`.
+
+The workflow checks that the tag is on `main`, matches `$plugin->release` and has a section
+`## <release> (<version>)` in `CHANGES.md`, whose text becomes the release notes, and waits for CI on
+the tagged commit. *Actions ▸ Release to Moodle Marketplace ▸ Run workflow* re-runs a tag or does a dry
+run. It needs the repository secret `MOODLE_MARKETPLACE_TOKEN`, an API token of a maintainer of the
+plugin from https://marketplace.moodle.com/account/security.

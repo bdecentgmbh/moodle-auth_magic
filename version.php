@@ -27,6 +27,6 @@ defined('MOODLE_INTERNAL') || die();
 $plugin->version = 2026102400;        // The current plugin version (Date: YYYYMMDDXX).
 $plugin->requires = 2024100700;        // Requires Moodle 4.5.
 $plugin->component = 'auth_magic';    // Full name of the plugin (used for diagnostics).
-$plugin->release = 'v1.7';
+$plugin->release = '1.7';
 $plugin->maturity = MATURITY_STABLE;
 $plugin->supported = [405, 503];

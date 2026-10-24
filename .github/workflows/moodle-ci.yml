@@ -1,8 +1,13 @@
 name: Moodle plugin CI
 
-# One run per Moodle version. The newest runs first; the others only run once it passes.
-
-on: [pull_request]
+# Runs on every push to main and on every pull request (dev is tested through its pull request), and
+# by hand. One job per Moodle version: the newest first, the others once it passes. The release
+# workflow (moodle-release.yml) waits for this run on the tagged commit of main.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
 
 jobs:
   canary:
