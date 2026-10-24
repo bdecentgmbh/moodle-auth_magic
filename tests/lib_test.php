@@ -41,6 +41,16 @@ final class lib_test extends \advanced_testcase {
     }
 
     /**
+     * Text of a captured email, with quoted-printable encoding removed.
+     *
+     * @param \stdClass $email Email from the email sink
+     * @return string
+     */
+    protected function email_text(\stdClass $email): string {
+        return quoted_printable_decode($email->body);
+    }
+
+    /**
      * Emails are matched without regard to case or surrounding spaces.
      */
     public function test_get_email_user_matches_email_case_insensitively(): void {
@@ -100,15 +110,21 @@ final class lib_test extends \advanced_testcase {
         global $DB;
 
         $user = $this->getDataGenerator()->create_user(['auth' => 'magic']);
-        $sink = $this->redirectMessages();
+        $sink = $this->redirectEmails();
 
         auth_magic_process_link_request($user);
 
         $messages = $sink->get_messages();
         $this->assertCount(1, $messages);
-        $this->assertEquals($user->id, $messages[0]->useridto);
+        $this->assertEquals($user->email, $messages[0]->to);
         $key = $DB->get_field('auth_magic_loginlinks', 'loginuserkey', ['userid' => $user->id]);
-        $this->assertStringContainsString('/auth/magic/login.php?key=' . $key, $messages[0]->fullmessagehtml);
+        $this->assertStringContainsString('/auth/magic/login.php?key=' . $key, $this->email_text($messages[0]));
+        // Links go by email from the no-reply address, with a plain text part without HTML.
+        $this->assertEquals(\core_user::get_noreply_user()->email, $messages[0]->from);
+        $this->assertStringContainsString('Content-Type: text/plain', $messages[0]->body);
+        $plain = explode('Content-Type: text/html', $this->email_text($messages[0]))[0];
+        $this->assertStringNotContainsString('<a href', $plain);
+        $this->assertStringNotContainsString('<br', $plain);
     }
 
     /**
@@ -119,12 +135,12 @@ final class lib_test extends \advanced_testcase {
 
         $user = $this->getDataGenerator()->create_user(['auth' => 'manual']);
         set_config('requestinterval', 0, 'auth_magic');
-        $sink = $this->redirectMessages();
+        $sink = $this->redirectEmails();
 
         auth_magic_process_link_request($user);
         $messages = $sink->get_messages();
         $this->assertCount(1, $messages);
-        $this->assertStringNotContainsString('/auth/magic/login.php', $messages[0]->fullmessagehtml);
+        $this->assertStringNotContainsString('/auth/magic/login.php', $this->email_text($messages[0]));
         $this->assertFalse($DB->record_exists('auth_magic_loginlinks', ['userid' => $user->id]));
 
         $sink->clear();
@@ -132,7 +148,7 @@ final class lib_test extends \advanced_testcase {
         auth_magic_process_link_request($user);
         $messages = $sink->get_messages();
         $this->assertCount(1, $messages);
-        $this->assertStringContainsString('/auth/magic/login.php?key=', $messages[0]->fullmessagehtml);
+        $this->assertStringContainsString('/auth/magic/login.php?key=', $this->email_text($messages[0]));
         $this->assertTrue($DB->record_exists('auth_magic_loginlinks', ['userid' => $user->id]));
     }
 
@@ -142,7 +158,7 @@ final class lib_test extends \advanced_testcase {
     public function test_process_link_request_ignores_inactive_accounts(): void {
         $suspended = $this->getDataGenerator()->create_user(['auth' => 'magic', 'suspended' => 1]);
         $unconfirmed = $this->getDataGenerator()->create_user(['auth' => 'magic', 'confirmed' => 0]);
-        $sink = $this->redirectMessages();
+        $sink = $this->redirectEmails();
 
         auth_magic_process_link_request($suspended);
         auth_magic_process_link_request($unconfirmed);
@@ -157,12 +173,12 @@ final class lib_test extends \advanced_testcase {
         $user = $this->getDataGenerator()->create_user(['auth' => 'magic']);
         $other = $this->getDataGenerator()->create_user(['auth' => 'magic']);
         set_config('requestinterval', 2 * MINSECS, 'auth_magic');
-        $sink = $this->redirectMessages();
+        $sink = $this->redirectEmails();
 
         auth_magic_process_link_request($user);
         auth_magic_process_link_request($user);
         auth_magic_process_link_request($other);
-        $this->assertEquals([$user->id, $other->id], array_column($sink->get_messages(), 'useridto'));
+        $this->assertEquals([$user->email, $other->email], array_column($sink->get_messages(), 'to'));
 
         // Once the interval has passed, the account gets the next email.
         $sink->clear();

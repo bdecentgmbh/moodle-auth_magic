@@ -49,35 +49,20 @@ function auth_magic_link_url(string $key): moodle_url {
 
 
 /**
- * Send message to user using message api.
+ * Email a message to a user.
  *
- * @param  mixed $userto
- * @param  mixed $subject
- * @param  mixed $messageplain
- * @param  mixed $messagehtml
- * @param  mixed $courseid
- * @return bool message status
+ * Like the password reset of core, this always uses email: whoever asks for a magic link isn't
+ * logged in, so other message channels don't reach them, and links shouldn't be kept as
+ * notifications.
+ *
+ * @param stdClass $userto
+ * @param string $subject
+ * @param string $messageplain
+ * @param string $messagehtml
+ * @return bool Whether the email was sent
  */
-function auth_magic_messagetouser($userto, $subject, $messageplain, $messagehtml, $courseid = null) {
-    $eventdata = new \core\message\message();
-    $eventname = (PHPUNIT_TEST) ? 'instantmessage' : 'notification';
-    $eventcomponent = (PHPUNIT_TEST) ? 'moodle' : 'auth_magic';
-    $eventdata->name = $eventname;
-    $eventdata->component = $eventcomponent;
-    $eventdata->courseid = empty($courseid) ? SITEID : $courseid;
-    $eventdata->userfrom = core_user::get_support_user();
-    $eventdata->userto = $userto;
-    $eventdata->subject = $subject;
-    $eventdata->fullmessage = $messageplain;
-    $eventdata->fullmessageformat = FORMAT_HTML;
-    $eventdata->fullmessagehtml = $messagehtml;
-    $eventdata->smallmessage = $subject;
-
-    if (message_send($eventdata)) {
-        return true;
-    } else {
-        return false;
-    }
+function auth_magic_messagetouser($userto, $subject, $messageplain, $messagehtml) {
+    return email_to_user($userto, core_user::get_noreply_user(), $subject, $messageplain, $messagehtml);
 }
 
 /**
@@ -114,8 +99,10 @@ function auth_magic_sent_loginlink_touser($userid, $otherauth = false, $expired 
     $data->fullname = fullname($user);
     $data->link = auth_magic_get_user_login_link($user->id);
     $data->expiry = auth_magic_get_user_magic_link_expires($user->id, 'loginexpiry');
-    $messageplain = get_string($expired ? 'expiredloginlinkmsg' : 'loginlinkmessage', 'auth_magic', $data);
-    $messagehtml = text_to_html($messageplain, false, false, true);
+    // The message strings contain HTML, the plain text part is made from it.
+    $message = get_string($expired ? 'expiredloginlinkmsg' : 'loginlinkmessage', 'auth_magic', $data);
+    $messagehtml = text_to_html($message, false, false, true);
+    $messageplain = html_to_text($messagehtml);
     $user->mailformat = 1;  // Always send HTML version as well.
     return auth_magic_messagetouser($user, $subject, $messageplain, $messagehtml);
 }
@@ -167,8 +154,8 @@ function auth_magic_requiredmail_magic_authentication($userid) {
     $data->admin = generate_email_signoff();
     $data->fullname = fullname($user);
     $data->forgothtml = $forgothtml;
-    $messageplain = get_string('preventmagicauthmessage', 'auth_magic', $data);
-    $messagehtml = text_to_html($messageplain, false, false, true);
+    $messagehtml = text_to_html(get_string('preventmagicauthmessage', 'auth_magic', $data), false, false, true);
+    $messageplain = html_to_text($messagehtml);
     $user->mailformat = 1;
     return auth_magic_messagetouser($user, $subject, $messageplain, $messagehtml);
 }

@@ -47,6 +47,16 @@ final class auth_magic_test extends \advanced_testcase {
     }
 
     /**
+     * Text of a captured email, with quoted-printable encoding removed.
+     *
+     * @param \stdClass $email Email from the email sink
+     * @return string
+     */
+    protected function email_text(\stdClass $email): string {
+        return quoted_printable_decode($email->body);
+    }
+
+    /**
      * Magic users can't log in with a password unless the plugin supports passwords.
      */
     public function test_users_can_not_login(): void {
@@ -99,14 +109,14 @@ final class auth_magic_test extends \advanced_testcase {
         set_config('loginexpiry', 0, 'auth_magic');
         $user = $this->getDataGenerator()->create_user(['auth' => 'magic']);
         $key = $DB->get_field('auth_magic_loginlinks', 'loginuserkey', ['userid' => $user->id]);
-        $sink = $this->redirectMessages();
+        $sink = $this->redirectEmails();
 
         $this->assertTrue(auth_magic_sent_loginlink_touser($user->id));
 
         $messages = $sink->get_messages();
         $this->assertCount(1, $messages);
-        $this->assertStringContainsString('key=' . $key, $messages[0]->fullmessagehtml);
-        $this->assertStringContainsString(get_string('never'), $messages[0]->fullmessagehtml);
+        $this->assertStringContainsString('key=' . $key, $this->email_text($messages[0]));
+        $this->assertStringContainsString(get_string('never'), $this->email_text($messages[0]));
         $this->assertEquals($key, $DB->get_field('auth_magic_loginlinks', 'loginuserkey', ['userid' => $user->id]));
     }
 
@@ -119,13 +129,13 @@ final class auth_magic_test extends \advanced_testcase {
         $user = $this->getDataGenerator()->create_user(['auth' => 'magic']);
         $instance = $DB->get_record('auth_magic_loginlinks', ['userid' => $user->id]);
         $DB->set_field('auth_magic_loginlinks', 'loginexpiry', time() - 1, ['id' => $instance->id]);
-        $sink = $this->redirectMessages();
+        $sink = $this->redirectEmails();
 
         auth_magic_sent_loginlink_touser($user->id);
         $newkey = $DB->get_field('auth_magic_loginlinks', 'loginuserkey', ['userid' => $user->id]);
         $this->assertNotEquals($instance->loginuserkey, $newkey);
         $this->assertFalse($DB->record_exists('user_private_key', ['value' => $instance->loginuserkey]));
-        $this->assertStringContainsString('key=' . $newkey, $sink->get_messages()[0]->fullmessagehtml);
+        $this->assertStringContainsString('key=' . $newkey, $this->email_text($sink->get_messages()[0]));
 
         // A key that is gone, for example after a single-use login, is replaced as well.
         $DB->delete_records('user_private_key', ['userid' => $user->id]);
@@ -163,14 +173,14 @@ final class auth_magic_test extends \advanced_testcase {
         set_config('requestinterval', 2 * MINSECS, 'auth_magic');
         // Logged in, so that the check doesn't redirect to the login page.
         $this->setUser($this->getDataGenerator()->create_user());
-        $sink = $this->redirectMessages();
+        $sink = $this->redirectEmails();
 
         $this->auth->check_userkey_type($instance->loginuserkey);
         $messages = $sink->get_messages();
         $this->assertCount(1, $messages);
         $newkey = $DB->get_field('auth_magic_loginlinks', 'loginuserkey', ['userid' => $user->id]);
         $this->assertNotEquals($instance->loginuserkey, $newkey);
-        $this->assertStringContainsString('key=' . $newkey, $messages[0]->fullmessagehtml);
+        $this->assertStringContainsString('key=' . $newkey, $this->email_text($messages[0]));
 
         // Within the interval, the old link doesn't send another one.
         $sink->clear();
@@ -188,7 +198,7 @@ final class auth_magic_test extends \advanced_testcase {
 
         $user = $this->getDataGenerator()->create_user(['auth' => 'magic']);
         $key = $DB->get_field('auth_magic_loginlinks', 'loginuserkey', ['userid' => $user->id]);
-        $sink = $this->redirectMessages();
+        $sink = $this->redirectEmails();
 
         $this->assertTrue($this->auth->check_userkey_type($key));
         $this->assertTrue($this->auth->check_userkey_type('unknown'));

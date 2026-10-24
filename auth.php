@@ -226,8 +226,7 @@ class auth_plugin_magic extends auth_plugin_base {
      * This method is called from login/index.php page for all enabled auth plugins.
      */
     public function loginpage_hook() {
-        global $CFG, $PAGE;
-        $CFG->authloginviaemail = true;
+        global $PAGE;
         $params = [
             'loginhook' => true,
             'linkurl' => (new \moodle_url('/auth/magic/login.php'))->out(false),
