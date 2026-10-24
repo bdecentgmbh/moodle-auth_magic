@@ -67,15 +67,18 @@ define([], function() {
 
     AuthMagic.prototype.magicLoginHandler = function(MagicLink, mailHandler) {
         MagicLink.addEventListener("click", function(e) {
-            e.preventDefault();
-
             var returnurl = e.currentTarget.getAttribute("href");
             var userValue = "";
             //form#login #username
             var mailSelector = document.querySelectorAll(mailHandler)[0];
             if (mailSelector) {
-                userValue = mailSelector.value;
+                userValue = mailSelector.value.trim();
             }
+            if (!userValue) {
+                // Nothing typed yet: follow the link to the page that asks for the email address.
+                return;
+            }
+            e.preventDefault();
 
             // Create a form.
             var form = document.createElement("form");

@@ -23,6 +23,7 @@
  */
 $string['and'] = "And";
 $string['anymethod'] = "Any method";
+$string['backtologin'] = 'Back to the login page';
 $string['belowpassword'] = "Below password";
 $string['belowusername'] = "Below username";
 $string['configtitle'] = "Magic authentication";
@@ -172,6 +173,9 @@ The {$a->sitename} Team';
 $string['registrationsubject'] = "Magic authentication Registration link";
 $string['requestinterval'] = 'Minimum time between magic link emails';
 $string['requestinterval_desc'] = 'Anybody can ask for a magic link for any email address. To keep this from flooding inboxes, an account gets at most one magic link email within this time, including the notice for accounts that use another login method. Requests in between get the usual answer but no email. 0 turns the limit off.';
+$string['requestlinkheading'] = 'Log in with a magic link';
+$string['requestlinkintro'] = 'Enter the email address of your account. You will get an email with a link that logs you in.';
+$string['requestlinkintrousername'] = 'Enter the email address or the username of your account. You will get an email with a link that logs you in.';
 $string['sendlink'] = "Send the magic link to the user";
 $string['sentinvitationlink'] = "Sent the invitation link to the mail";
 $string['sentlinktouser'] = "If you supplied a correct email address, an email containing a magic login link should have been sent to you.";

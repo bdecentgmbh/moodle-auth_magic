@@ -67,7 +67,29 @@ if ($magiclogin) {
 }
 
 $auth = get_auth_plugin('magic');
-$keyvalue = required_param('key', PARAM_ALPHANUM);
+$keyvalue = optional_param('key', '', PARAM_ALPHANUM);
+
+if ($keyvalue === '') {
+    if (isloggedin() && !isguestuser()) {
+        // Nothing to do here, for example after a password login that returns to this page.
+        redirect(new moodle_url('/'));
+    }
+    // The button of the login page leads here when its script can't post the username, for
+    // example with JavaScript off or in a theme with a different login form. Ask for it here.
+    $usernames = get_config('auth_magic', 'loginoption');
+    $PAGE->set_pagelayout('login');
+    $PAGE->set_title(get_string('requestlinkheading', 'auth_magic'));
+    echo $OUTPUT->header();
+    echo $OUTPUT->render_from_template('auth_magic/request_link', [
+        'actionurl' => $PAGE->url->out(false),
+        'logintoken' => \core\session\manager::get_login_token(),
+        'intro' => get_string($usernames ? 'requestlinkintrousername' : 'requestlinkintro', 'auth_magic'),
+        'label' => get_string($usernames ? 'usernameemail' : 'email'),
+        'loginurl' => get_login_url(),
+    ]);
+    echo $OUTPUT->footer();
+    die;
+}
 
 if (isset($SESSION->wantsurl)) {
     $redirecturl = $SESSION->wantsurl;
