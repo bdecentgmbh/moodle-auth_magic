@@ -14,124 +14,185 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+namespace auth_magic;
+
 /**
- *  Magic authendication test cases defined.
+ * Tests for the magic authentication plugin and its login keys.
  *
  * @package   auth_magic
  * @copyright 2023 bdecent gmbh <https://bdecent.de>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-namespace auth_magic;
-
-use stdClass;
-
-/**
- * Magic authendication test cases defined.
- */
+#[\PHPUnit\Framework\Attributes\CoversClass(\auth_plugin_magic::class)]
+#[\PHPUnit\Framework\Attributes\CoversFunction('auth_magic_sent_loginlink_touser')]
+#[\PHPUnit\Framework\Attributes\CoversFunction('auth_magic_get_user_login_link')]
 final class auth_magic_test extends \advanced_testcase {
-    /**
-     * Authendication object
-     * @var object
-     */
-    public $auth;
+    /** @var \auth_plugin_magic */
+    protected $auth;
 
-    /**
-     * Summary of generator
-     * @var \testing_data_generator
-     */
-    public $generator;
-
-    /**
-     * Summary of user1
-     * @var object
-     */
-    public $user1;
-
-    /**
-     * Summary of user2
-     * @var object
-     */
-    public $user2;
-
-    /**
-     * Summary of user3
-     * @var object
-     */
-    public $user3;
-
-    /**
-     * Set the admin user as User.
-     *
-     * @return void
-     */
-    public function setup(): void {
+    #[\Override]
+    public static function setUpBeforeClass(): void {
         global $CFG;
-        require_once($CFG->dirroot . "/auth/magic/auth.php");
-        require_once($CFG->dirroot . "/auth/magic/lib.php");
-        $this->resetAfterTest(true);
-        $this->setAdminUser();
-        $this->auth = new \auth_plugin_magic();
-        $this->generator = $this->getDataGenerator();
-        $this->user1 = $this->generator->create_user(['auth' => 'magic']);
-        $this->user2 = $this->generator->create_user(['auth' => 'magic']);
-        $this->user3 = $this->generator->create_user(['auth' => 'magic']);
+        require_once($CFG->dirroot . '/auth/magic/auth.php');
+        parent::setUpBeforeClass();
+    }
+
+    #[\Override]
+    protected function setUp(): void {
+        parent::setUp();
+        $this->resetAfterTest();
+        $this->auth = get_auth_plugin('magic');
     }
 
     /**
-     * Test that magic users can't login.
-     * @covers ::users_can_not_login
+     * Magic users can't log in with a password unless the plugin supports passwords.
      */
     public function test_users_can_not_login(): void {
-        $user = new stdClass();
-        $user->auth = 'magic';
-        $user->username = 'user';
-        $user->password = 'pass';
-        $this->generator->create_user($user);
-        $this->assertTrue(!$this->auth->user_login('user', 'pass'));
+        $this->getDataGenerator()->create_user(['auth' => 'magic', 'username' => 'user', 'password' => 'pass']);
+        $this->assertFalse($this->auth->user_login('user', 'pass'));
+
+        set_config('supportpassword', 1, 'auth_magic');
+        $this->assertTrue($this->auth->user_login('user', 'pass'));
     }
 
     /**
-     * Test create_user_key.
-     * @covers ::create_user_key
+     * Keys are created and deleted for a user.
      */
-    public function test_create_user_key(): void {
+    public function test_create_and_delete_user_keys(): void {
         global $DB;
-        $key = $this->auth->create_user_key($this->user3->id, 0);
-        $userkeys = $DB->get_records('user_private_key', ['userid' => $this->user3->id]);
-        $this->assertTrue(count($userkeys) > 0);
+
+        $user = $this->getDataGenerator()->create_user();
+        $this->auth->create_user_key($user->id, 0);
+        $this->assertTrue($DB->record_exists('user_private_key', ['userid' => $user->id, 'script' => 'auth/magic']));
+
+        $this->auth->delete_keys($user->id);
+        $this->assertFalse($DB->record_exists('user_private_key', ['userid' => $user->id, 'script' => 'auth/magic']));
     }
 
     /**
-     * Test user_delete_keys.
-     * @covers ::user_delete_keys
-     */
-    public function test_user_delete_keys(): void {
-        global $DB;
-        $this->auth->create_user_key($this->user1->id, 0);
-        $this->auth->delete_keys($this->user1->id);
-        $userkeys = $DB->get_records('user_private_key', ['userid' => $this->user1->id]);
-        $this->assertTrue(count($userkeys) == 0);
-    }
-
-
-    /**
-     * Test create_magic_instance.
-     * @covers ::create_magic_instance
+     * Magic accounts get a login key when they are created, other accounts when they ask for one.
      */
     public function test_create_magic_instance(): void {
         global $DB;
-        $user1 = $this->generator->create_user(['auth' => 'manual']);
-        $user2 = $this->generator->create_user(['auth' => 'magic']);
-        $user1keys = $DB->get_records('user_private_key', ['userid' => $user1->id]);
-        $user2keys = $DB->get_records('user_private_key', ['userid' => $user2->id]);
-        $this->assertTrue(count($user1keys) == 0);
-        $this->assertTrue(count($user2keys) > 0);
-        $this->auth->create_magic_instance($user1, true);
-        $user1magicinstances = $DB->get_records('auth_magic_loginlinks', ['userid' => $user1->id]);
-        $user1keys = $DB->get_records('user_private_key', ['userid' => $user1->id]);
-        $this->assertTrue(count($user1magicinstances) > 0);
-        $this->assertFalse(count($user1magicinstances) == 0);
-        $this->assertTrue(count($user1keys) > 0);
+
+        $manual = $this->getDataGenerator()->create_user(['auth' => 'manual']);
+        $magic = $this->getDataGenerator()->create_user(['auth' => 'magic']);
+        $this->assertFalse($DB->record_exists('auth_magic_loginlinks', ['userid' => $manual->id]));
+        $this->assertCount(1, $DB->get_records('user_private_key', ['userid' => $magic->id]));
+
+        $this->auth->create_magic_instance($manual, false);
+        $instance = $DB->get_record('auth_magic_loginlinks', ['userid' => $manual->id], '*', MUST_EXIST);
+        $this->assertCount(1, $DB->get_records('user_private_key', ['userid' => $manual->id]));
+        // Free creates no invitation keys, nothing sends them.
+        $this->assertNull($instance->invitationuserkey);
+        $this->assertNull($instance->magicinvitation);
+    }
+
+    /**
+     * A login link that never expires is sent once, without renewing the key.
+     */
+    public function test_send_link_that_never_expires(): void {
+        global $DB;
+
+        set_config('loginexpiry', 0, 'auth_magic');
+        $user = $this->getDataGenerator()->create_user(['auth' => 'magic']);
+        $key = $DB->get_field('auth_magic_loginlinks', 'loginuserkey', ['userid' => $user->id]);
+        $sink = $this->redirectMessages();
+
+        $this->assertTrue(auth_magic_sent_loginlink_touser($user->id));
+
+        $messages = $sink->get_messages();
+        $this->assertCount(1, $messages);
+        $this->assertStringContainsString('key=' . $key, $messages[0]->fullmessagehtml);
+        $this->assertStringContainsString(get_string('never'), $messages[0]->fullmessagehtml);
+        $this->assertEquals($key, $DB->get_field('auth_magic_loginlinks', 'loginuserkey', ['userid' => $user->id]));
+    }
+
+    /**
+     * An expired or missing login key is replaced before the link is sent.
+     */
+    public function test_send_link_replaces_unusable_key(): void {
+        global $DB;
+
+        $user = $this->getDataGenerator()->create_user(['auth' => 'magic']);
+        $instance = $DB->get_record('auth_magic_loginlinks', ['userid' => $user->id]);
+        $DB->set_field('auth_magic_loginlinks', 'loginexpiry', time() - 1, ['id' => $instance->id]);
+        $sink = $this->redirectMessages();
+
+        auth_magic_sent_loginlink_touser($user->id);
+        $newkey = $DB->get_field('auth_magic_loginlinks', 'loginuserkey', ['userid' => $user->id]);
+        $this->assertNotEquals($instance->loginuserkey, $newkey);
+        $this->assertFalse($DB->record_exists('user_private_key', ['value' => $instance->loginuserkey]));
+        $this->assertStringContainsString('key=' . $newkey, $sink->get_messages()[0]->fullmessagehtml);
+
+        // A key that is gone, for example after a single-use login, is replaced as well.
+        $DB->delete_records('user_private_key', ['userid' => $user->id]);
+        auth_magic_sent_loginlink_touser($user->id);
+        $key = $DB->get_field('auth_magic_loginlinks', 'loginuserkey', ['userid' => $user->id]);
+        $this->assertTrue($DB->record_exists('user_private_key', ['value' => $key, 'userid' => $user->id]));
+    }
+
+    /**
+     * Links are built from the key, so that they follow the site URL.
+     */
+    public function test_login_link_follows_site_url(): void {
+        global $CFG, $DB;
+
+        $user = $this->getDataGenerator()->create_user(['auth' => 'magic']);
+        $key = $DB->get_field('auth_magic_loginlinks', 'loginuserkey', ['userid' => $user->id]);
+        $CFG->wwwroot = 'https://moved.example.com';
+
+        $this->assertEquals(
+            'https://moved.example.com/auth/magic/login.php?key=' . $key,
+            auth_magic_get_user_login_link($user->id)
+        );
+        $this->assertSame('', auth_magic_get_user_login_link($user->id + 1));
+    }
+
+    /**
+     * Using an expired link sends a new one, at most once per request interval.
+     */
+    public function test_check_userkey_type_sends_new_link_for_expired_key(): void {
+        global $DB;
+
+        $user = $this->getDataGenerator()->create_user(['auth' => 'magic']);
+        $instance = $DB->get_record('auth_magic_loginlinks', ['userid' => $user->id]);
+        $DB->set_field('auth_magic_loginlinks', 'loginexpiry', time() - 1, ['id' => $instance->id]);
+        set_config('requestinterval', 2 * MINSECS, 'auth_magic');
+        // Logged in, so that the check doesn't redirect to the login page.
+        $this->setUser($this->getDataGenerator()->create_user());
+        $sink = $this->redirectMessages();
+
+        $this->auth->check_userkey_type($instance->loginuserkey);
+        $messages = $sink->get_messages();
+        $this->assertCount(1, $messages);
+        $newkey = $DB->get_field('auth_magic_loginlinks', 'loginuserkey', ['userid' => $user->id]);
+        $this->assertNotEquals($instance->loginuserkey, $newkey);
+        $this->assertStringContainsString('key=' . $newkey, $messages[0]->fullmessagehtml);
+
+        // Within the interval, the old link doesn't send another one.
+        $sink->clear();
+        $DB->set_field('auth_magic_loginlinks', 'loginexpiry', time() - 1, ['userid' => $user->id]);
+        $this->auth->check_userkey_type($newkey);
+        $this->assertCount(0, $sink->get_messages());
+        $this->assertEquals($newkey, $DB->get_field('auth_magic_loginlinks', 'loginuserkey', ['userid' => $user->id]));
+    }
+
+    /**
+     * Keys that are still valid, unknown keys and keys without expiry are left alone.
+     */
+    public function test_check_userkey_type_ignores_usable_keys(): void {
+        global $DB;
+
+        $user = $this->getDataGenerator()->create_user(['auth' => 'magic']);
+        $key = $DB->get_field('auth_magic_loginlinks', 'loginuserkey', ['userid' => $user->id]);
+        $sink = $this->redirectMessages();
+
+        $this->assertTrue($this->auth->check_userkey_type($key));
+        $this->assertTrue($this->auth->check_userkey_type('unknown'));
+        $DB->set_field('auth_magic_loginlinks', 'loginexpiry', 0, ['userid' => $user->id]);
+        $this->assertTrue($this->auth->check_userkey_type($key));
+
+        $this->assertCount(0, $sink->get_messages());
     }
 }

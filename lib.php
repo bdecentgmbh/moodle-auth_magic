@@ -25,12 +25,26 @@
 
 /**
  * Get user login link
+ *
+ * The link is built from the key, so that it follows changes of the site URL.
+ *
  * @param int $userid
- * @return string url.
+ * @return string url, empty if the user has no login key
  */
 function auth_magic_get_user_login_link($userid) {
     global $DB;
-    return $DB->get_field('auth_magic_loginlinks', 'magiclogin', ['userid' => $userid]);
+    $key = $DB->get_field('auth_magic_loginlinks', 'loginuserkey', ['userid' => $userid]);
+    return $key ? auth_magic_link_url($key)->out(false) : '';
+}
+
+/**
+ * URL of the magic link for a key.
+ *
+ * @param string $key
+ * @return moodle_url
+ */
+function auth_magic_link_url(string $key): moodle_url {
+    return new moodle_url('/auth/magic/login.php', ['key' => $key]);
 }
 
 
@@ -68,47 +82,42 @@ function auth_magic_messagetouser($userto, $subject, $messageplain, $messagehtml
 
 /**
  * Sent the login link to the user.
+ *
+ * A login key that has expired or is gone is replaced first, so that the link works.
+ *
  * @param int $userid
- * @param bool $otherauth
- * @param bool $expired
+ * @param bool $otherauth Whether the user has another login method than magic
+ * @param bool $expired Whether the user tried an expired link, which changes the message
  * @return bool message status
  */
 function auth_magic_sent_loginlink_touser($userid, $otherauth = false, $expired = false) {
     global $DB;
     $site = get_site();
-    $user = \core_user::get_user($userid);
+    $user = \core_user::get_user($userid, '*', MUST_EXIST);
     $auth = get_auth_plugin('magic');
-    if ($otherauth) {
-        $auth->create_magic_instance($user, false);
+    $auth->create_magic_instance($user, !$otherauth);
+
+    $instance = $DB->get_record('auth_magic_loginlinks', ['userid' => $user->id], '*', MUST_EXIST);
+    $keyexists = $DB->record_exists('user_private_key', [
+        'script' => 'auth/magic',
+        'userid' => $user->id,
+        'value' => $instance->loginuserkey,
+    ]);
+    if (!$keyexists || (!empty($instance->loginexpiry) && $instance->loginexpiry < time())) {
+        $auth->update_new_loginkey($user, $instance);
     }
-    $loginlink = auth_magic_get_user_login_link($userid);
+
     $subject = get_string('loginsubject', 'auth_magic', format_string($site->fullname));
     $data = new stdClass();
     $data->sitename = format_string($site->fullname);
     $data->admin = generate_email_signoff();
     $data->fullname = fullname($user);
-    if (empty($loginlink)) {
-        $auth->create_magic_instance($user, false);
-        $loginlink = auth_magic_get_user_login_link($user->id);
-    }
-    $data->link = $loginlink;
-    $data->expiry = auth_magic_get_user_magic_link_expires($userid, 'loginexpiry');
-    if ($expired) {
-        $messageplain = get_string('expiredloginlinkmsg', 'auth_magic', $data);
-    } else {
-        // Check link is expiry and more type.
-        $instance = $DB->get_record('auth_magic_loginlinks', ['userid' => $user->id]);
-        if ($instance->loginexpiry < time()) {
-            $auth->update_new_loginkey($user, $instance);
-            auth_magic_sent_loginlink_touser($user->id, $otherauth);
-            return;
-        }
-        $messageplain = get_string('loginlinkmessage', 'auth_magic', $data);
-    }
+    $data->link = auth_magic_get_user_login_link($user->id);
+    $data->expiry = auth_magic_get_user_magic_link_expires($user->id, 'loginexpiry');
+    $messageplain = get_string($expired ? 'expiredloginlinkmsg' : 'loginlinkmessage', 'auth_magic', $data);
     $messagehtml = text_to_html($messageplain, false, false, true);
     $user->mailformat = 1;  // Always send HTML version as well.
-    auth_magic_messagetouser($user, $subject, $messageplain, $messagehtml);
-    return true;
+    return auth_magic_messagetouser($user, $subject, $messageplain, $messagehtml);
 }
 
 
@@ -121,7 +130,7 @@ function auth_magic_sent_loginlink_touser($userid, $otherauth = false, $expired 
 function auth_magic_get_user_magic_link_expires($userid, $type) {
     global $DB;
     $expiry = $DB->get_field('auth_magic_loginlinks', $type, ['userid' => $userid]);
-    return $expiry ? auth_magic_expirytime_convert_datestring($expiry) : '';
+    return $expiry ? auth_magic_expirytime_convert_datestring($expiry) : get_string('never');
 }
 
 /**
