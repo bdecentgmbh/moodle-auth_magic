@@ -43,6 +43,7 @@ for a link.
 | Magic login link expiry | 10 minutes | How long a link works. 0 means links never expire |
 | Minimum time between magic link emails | 2 minutes | An account gets at most one email within this time, however often anybody asks. 0 turns the limit off |
 | Configure login key link | Only once | *Only once*: a link logs in once. *Until it expires*: a link logs in as often as needed until it expires |
+| Ask before logging in | Always | Whether opening a link first asks "Do you want to log in to … as …?". *Always*, *Only for single-use links* (links that work until they expire log in on opening) or *Never*. See *How links are kept safe* |
 | Allow Username to get magic link | Off | Users can type their username instead of their email address |
 | Supported authentication method | Magic only | *Magic only*: only magic accounts can use links. *Any method*: accounts with other enabled login methods can use links too, except web service accounts. Going back to *Magic only* deletes their links |
 
@@ -73,8 +74,8 @@ between magic link emails*.
 ### Using a link
 
 Whether a link that is valid (not expired, not used yet if links work only once) logs the account in.
-Opening a link only asks "Do you want to log in to … as …?"; the account is logged in when the user
-clicks *Log in*.
+With *Ask before logging in* on *Always* (the default), opening a link only asks "Do you want to log
+in to … as …?"; the account is logged in when the user clicks *Log in*.
 
 | Account | Magic only | Any method |
 |---|---|---|
@@ -115,6 +116,9 @@ when it is turned back on. Accounts created while it was off have no password un
 | | 0 | Links never expire |
 | Configure login key link | Only once | A link logs in once, then it is no longer valid |
 | | Until it expires | A link logs in as often as needed until it expires |
+| Ask before logging in | Always (default) | Every link asks before it logs in |
+| | Only for single-use links | Links that work until they expire log in as soon as they are opened; single-use links ask |
+| | Never | Every link logs in as soon as it is opened |
 | Allow Username to get magic link | Off | Only email addresses. A username gets "Invalid email address" |
 | | On | Email addresses and usernames |
 | Minimum time between magic link emails | A duration | At most one email per account within that time |
@@ -134,9 +138,13 @@ when it is turned back on. Accounts created while it was off have no password un
 - **No inbox flooding.** *Minimum time between magic link emails* limits the emails anybody can
   trigger for an account: requested links, the notice for other login methods and the new link sent
   when somebody uses an expired one.
-- **Opening a link changes nothing.** It shows whom the link logs in, and the user confirms with
-  *Log in*. So mail scanners and link previews, such as Outlook Safe Links, don't use up single-use
-  links, and a link from somebody else can't log a visitor into another account unnoticed.
+- **Opening a link changes nothing** (with *Ask before logging in* on *Always*, the default). It shows
+  whom the link logs in, and the user confirms with *Log in*. So mail scanners and link previews, such
+  as Outlook Safe Links, don't use up single-use links or log in, and a link from somebody else can't
+  log a visitor into another account unnoticed. *Only for single-use links* suits permanent personal
+  links such as bookmarks or QR codes, but a scanner that opens such a link in an email logs in as the
+  user, and Moodle may then send the user a "New sign in" notification. With *Never*, scanners can use
+  up single-use links before the user clicks them.
 - **No silent account switch.** If somebody else is logged in when a link is opened, they are asked
   "You are logged in as … Do you want to log out and log in as …?" before anything changes.
 - **Links follow your policy.** A link only works while the account may use links. If you set

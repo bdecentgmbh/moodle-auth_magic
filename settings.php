@@ -58,6 +58,18 @@ if ($ADMIN->fulltree) {
     $setting = new admin_setting_configselect($name, $title, $desc, 'once', $options);
     $settings->add($setting);
 
+    // Whether opening a link asks before it logs in.
+    $name = "auth_magic/confirmlogin";
+    $title = get_string("confirmlogin", "auth_magic");
+    $desc = get_string("confirmlogin_desc", "auth_magic");
+    $options = [
+        'always' => get_string('confirmloginalways', 'auth_magic'),
+        'once' => get_string('confirmloginonce', 'auth_magic'),
+        'never' => get_string('confirmloginnever', 'auth_magic'),
+    ];
+    $setting = new admin_setting_configselect($name, $title, $desc, 'always', $options);
+    $settings->add($setting);
+
     // Allow user to use username to login option.
     $name = "auth_magic/loginoption";
     $title = get_string("loginoption", "auth_magic");

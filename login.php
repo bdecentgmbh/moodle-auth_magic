@@ -85,10 +85,13 @@ if ($keyvalue === '') {
     die;
 }
 
-// Opening a link only shows whom it logs in; it logs in when the visitor confirms with a POST. So mail
-// scanners and link previews neither use links up nor log anybody in, and a link from somebody else
-// can't log a visitor into another account unnoticed (login CSRF).
-if (!data_submitted() || !confirm_sesskey(optional_param('sesskey', '', PARAM_RAW))) {
+// Opening a link can show whom it logs in and log in only when the visitor confirms with a POST (setting
+// Ask before logging in). So mail scanners and link previews neither use links up nor log anybody in,
+// and a link from somebody else can't log a visitor into another account unnoticed (login CSRF).
+// Switching from another logged-in account always asks.
+$loggedin = isloggedin() && !isguestuser();
+$confirmed = data_submitted() && confirm_sesskey(optional_param('sesskey', '', PARAM_RAW));
+if (!$confirmed && ($loggedin || $auth->asks_before_login())) {
     // Nothing changes before the confirmation: no login, no new link, no deleted link.
     $key = $DB->get_record('user_private_key', ['script' => 'auth/magic', 'value' => $keyvalue]);
     $user = $key ? core_user::get_user($key->userid) : false;
@@ -100,7 +103,6 @@ if (!data_submitted() || !confirm_sesskey(optional_param('sesskey', '', PARAM_RA
     if (!$auth->can_login_with_link($user)) {
         auth_magic_redirect_with_message(get_string('linknotallowed', 'auth_magic'), \core\output\notification::NOTIFY_ERROR);
     }
-    $loggedin = isloggedin() && !isguestuser();
     if ($loggedin && $USER->id == $user->id) {
         redirect(core_login_get_return_url());
     }
@@ -128,7 +130,7 @@ if (!data_submitted() || !confirm_sesskey(optional_param('sesskey', '', PARAM_RA
     die;
 }
 
-// Confirmed. A link that has expired sends a new one and returns to the login page.
+// Confirmed, or no confirmation needed. A link that has expired sends a new one and returns to the login page.
 $auth->check_userkey_type($keyvalue);
 
 try {

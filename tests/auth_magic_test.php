@@ -385,4 +385,24 @@ final class auth_magic_test extends \advanced_testcase {
         $this->assertFalse($DB->record_exists('user_preferences', ['name' => 'auth_magic_lastlinkemail']));
         $this->assertTrue($DB->record_exists('user_private_key', ['value' => $otherkey]));
     }
+
+    /**
+     * Whether opening a link asks first follows the setting and, for single-use only, the key usage.
+     */
+    public function test_asks_before_login(): void {
+        $cases = [
+            // Ask before logging in, Configure login key link, expected.
+            [null, 'once', true],
+            ['always', 'more', true],
+            ['once', 'once', true],
+            ['once', 'more', false],
+            ['never', 'once', false],
+            ['never', 'more', false],
+        ];
+        foreach ($cases as [$confirmlogin, $loginkeytype, $expected]) {
+            set_config('confirmlogin', $confirmlogin, 'auth_magic');
+            set_config('loginkeytype', $loginkeytype, 'auth_magic');
+            $this->assertSame($expected, $this->auth->asks_before_login(), "$confirmlogin / $loginkeytype");
+        }
+    }
 }

@@ -37,10 +37,12 @@ fields.
 
 ## Logging in with a link
 
-`login.php?key=…` opened with GET changes nothing. It checks the key read-only and shows a confirmation,
-"Log in to … as …?" (or the account switch question if another user is logged in), whose button posts
-the key with the sesskey. Mail scanners and link previews therefore neither use links up nor log
-anybody in, and a link from somebody else can't log a visitor in unnoticed (login CSRF).
+`login.php?key=…` opened with GET changes nothing if `auth_plugin_magic::asks_before_login()` (setting
+*Ask before logging in*) or another user is logged in. It checks the key read-only and shows a
+confirmation, "Log in to … as …?" (or the account switch question), whose button posts the key with
+the sesskey. Mail scanners and link previews therefore neither use links up nor log anybody in, and a
+link from somebody else can't log a visitor in unnoticed (login CSRF). Otherwise the GET goes on like
+a confirmed POST.
 
 The confirmed POST then:
 

@@ -215,6 +215,24 @@ class auth_plugin_magic extends auth_plugin_base {
     }
 
     /**
+     * Whether opening a link asks "Log in as …?" before it logs in a visitor who isn't logged in.
+     *
+     * Setting Ask before logging in: always (the default), only for single-use links, or never.
+     *
+     * @return bool
+     */
+    public function asks_before_login(): bool {
+        switch (get_config('auth_magic', 'confirmlogin')) {
+            case 'never':
+                return false;
+            case 'once':
+                return get_config('auth_magic', 'loginkeytype') == 'once';
+            default:
+                return true;
+        }
+    }
+
+    /**
      * Get plugin config data.
      * @return stdClass data
      */

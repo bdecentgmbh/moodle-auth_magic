@@ -87,3 +87,29 @@ Feature: Log in with a magic link
       | authmethod | 0 | auth_magic |
     And I open the last magic login link again
     And I should see "Your account can no longer log in with a magic link."
+
+  Scenario: With "Only for single-use links" reusable links log in as soon as they are opened
+    Given the following config values are set as admin:
+      | confirmlogin | once | auth_magic |
+      | loginkeytype | more | auth_magic |
+    When I open the magic login link of "user_01"
+    Then I should not see "Do you want to"
+    And I visit "/user/profile.php"
+    And I should see "User One"
+    And I log out
+    And the following config values are set as admin:
+      | loginkeytype | once | auth_magic |
+    And I open the magic login link of "user_02"
+    And I should see "Do you want to log in to Acceptance test site as User Two?"
+
+  Scenario: With "Never" links log in as soon as they are opened, but switching accounts still asks
+    Given the following config values are set as admin:
+      | confirmlogin | never | auth_magic |
+    When I open the magic login link of "user_02"
+    And I visit "/user/profile.php"
+    Then I should see "User Two"
+    And I open the magic login link of "user_01"
+    And I should see "You are logged in as User Two. Do you want to log out and log in as User One?"
+    And I press "Continue"
+    And I visit "/user/profile.php"
+    And I should see "User One"

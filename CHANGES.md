@@ -8,8 +8,9 @@
 - Security: link requests need the login token of the login form, and an account gets at most one
   email per *Minimum time between magic link emails* (new setting, default 2 minutes).
 - Security: opening a magic link only asks "Do you want to log in to … as …?" and the user confirms
-  with a click. So mail scanners and link previews no longer use up links, and a link from somebody
-  else can't log a visitor in unnoticed.
+  with a click. So mail scanners and link previews no longer use up links or log in, and a link from
+  somebody else can't log a visitor in unnoticed. The new setting *Ask before logging in* (default
+  *Always*) can limit this to single-use links or turn it off.
 - Security: a magic link of another account asks before it switches the logged-in user.
 - Security: links are checked against *Supported authentication method* when they are used, and
   deleted when an account or the setting no longer allows them. The guest account and web service

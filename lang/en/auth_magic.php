@@ -24,6 +24,11 @@
 $string['anymethod'] = "Any method";
 $string['authmethod_desc'] = 'Magic only: only accounts with the login method Magic authentication can use magic links. Accounts with other login methods that ask for one are told to log in as usual. Any method: accounts of all enabled login methods (for example Manual accounts or OAuth 2) can use magic links too, including administrators, who can then log in with access to their mailbox alone. Web service accounts and the guest account never can. Going back to Magic only deletes the links of other login methods.';
 $string['backtologin'] = 'Back to the login page';
+$string['confirmlogin'] = 'Ask before logging in';
+$string['confirmlogin_desc'] = 'Whether opening a magic link first asks "Do you want to log in to … as …?" and logs in only when the user clicks Log in. Always: mail security scanners and link previews (for example Outlook Safe Links) then neither use up links nor log in, and nobody can be logged into somebody else\'s account with a link they were sent. Only for single-use links: links that work until they expire log in as soon as they are opened, which suits permanent personal links such as bookmarks or QR codes. If such a link arrives by email, a mail scanner that opens it logs in as the user, and Moodle may send the user a "New sign in" notification. Never: links also log in as soon as they are opened, and mail scanners can use up single-use links before the user clicks them. A user who is logged in as somebody else is always asked before switching accounts.';
+$string['confirmloginalways'] = 'Always';
+$string['confirmloginnever'] = 'Never';
+$string['confirmloginonce'] = 'Only for single-use links';
 $string['currentlylinkexpiry'] = "As the login link has expired, a new link will be sent to your email address when you click on the expired login link.";
 $string['expiredloginlinkmsg'] = 'Hi {$a->fullname},
 

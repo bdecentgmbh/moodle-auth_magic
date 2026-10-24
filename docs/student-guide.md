@@ -13,8 +13,8 @@ On this site you can log in with a link that you get by email, instead of a pass
 1. On the login page, type your email address in the *Username* field. If the site allows it, your
    username works too.
 2. Click *Magic link via email* (or *Log in with Magic link via email*).
-3. Open the email and click the link. The page asks whether to log in as you: click *Log in*. You
-   are logged in and taken to the page you wanted.
+3. Open the email and click the link. If the page asks whether to log in as you, click *Log in*.
+   You are logged in and taken to the page you wanted.
 
 If you click the button without typing anything, a page asks for your email address.
 
