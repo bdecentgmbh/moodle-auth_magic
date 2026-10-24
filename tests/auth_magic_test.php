@@ -71,14 +71,71 @@ final class auth_magic_test extends \advanced_testcase {
     }
 
     /**
-     * Magic users can't log in with a password unless the plugin supports passwords.
+     * Without password support, magic accounts have no password: no login, change, reset or storing.
      */
-    public function test_users_can_not_login(): void {
-        $this->getDataGenerator()->create_user(['auth' => 'magic', 'username' => 'user', 'password' => 'pass']);
-        $this->assertFalse($this->auth->user_login('user', 'pass'));
+    public function test_without_password_support(): void {
+        global $DB;
+
+        $user = $this->getDataGenerator()->create_user(['auth' => 'magic', 'username' => 'anna', 'password' => 'Passw0rd!']);
+
+        $this->assertFalse($this->auth->user_login('anna', 'Passw0rd!'));
+        $this->assertTrue($this->auth->prevent_local_passwords());
+        $this->assertFalse($this->auth->is_internal());
+        $this->assertFalse($this->auth->can_change_password());
+        $this->assertFalse($this->auth->can_reset_password());
+        $this->assertFalse($this->auth->user_update_password($user, 'N3w-passw0rd!'));
+        // Moodle doesn't store passwords for accounts of plugins that prevent them.
+        update_internal_user_password($DB->get_record('user', ['id' => $user->id]), 'N3w-passw0rd!');
+        $this->assertEquals(AUTH_PASSWORD_NOT_CACHED, $DB->get_field('user', 'password', ['id' => $user->id]));
+    }
+
+    /**
+     * With password support, magic accounts log in, change and reset their password like manual accounts.
+     */
+    public function test_with_password_support(): void {
+        set_config('supportpassword', 1, 'auth_magic');
+        $user = $this->getDataGenerator()->create_user(['auth' => 'magic', 'username' => 'anna', 'password' => 'Passw0rd!']);
+
+        $this->assertTrue($this->auth->user_login('anna', 'Passw0rd!'));
+        $this->assertFalse($this->auth->user_login('anna', 'wrong'));
+        $this->assertFalse($this->auth->user_login('nobody', 'Passw0rd!'));
+        $this->assertFalse($this->auth->prevent_local_passwords());
+        $this->assertTrue($this->auth->is_internal());
+        $this->assertTrue($this->auth->can_change_password());
+        $this->assertTrue($this->auth->can_reset_password());
+        $this->assertNull($this->auth->change_password_url());
+
+        $this->assertTrue($this->auth->user_update_password($user, 'N3w-passw0rd!'));
+        $this->assertFalse($this->auth->user_login('anna', 'Passw0rd!'));
+        $this->assertTrue($this->auth->user_login('anna', 'N3w-passw0rd!'));
+
+        // Turning password support off again stops password logins, but keeps the password.
+        set_config('supportpassword', 0, 'auth_magic');
+        $this->assertFalse($this->auth->user_login('anna', 'N3w-passw0rd!'));
+        set_config('supportpassword', 1, 'auth_magic');
+        $this->assertTrue($this->auth->user_login('anna', 'N3w-passw0rd!'));
+    }
+
+    /**
+     * Password logins go through the core login, which picks the plugin of the account.
+     */
+    public function test_password_login_through_core(): void {
+        global $CFG;
+
+        $this->getDataGenerator()->create_user(['auth' => 'magic', 'username' => 'anna', 'password' => 'Passw0rd!']);
+        set_config('auth', 'magic');
+        // Like the core login tests: a user agent, and failed logins logged to a file instead of the output.
+        $_SERVER['HTTP_USER_AGENT'] = 'no browser';
+        $oldlog = ini_set('error_log', $CFG->dataroot . '/testlog.log');
+
+        $failurereason = null;
+        $this->assertFalse(authenticate_user_login('anna', 'Passw0rd!', false, $failurereason, false));
+        $this->assertEquals(AUTH_LOGIN_FAILED, $failurereason);
 
         set_config('supportpassword', 1, 'auth_magic');
-        $this->assertTrue($this->auth->user_login('user', 'pass'));
+        $user = authenticate_user_login('anna', 'Passw0rd!', false, $failurereason, false);
+        $this->assertEquals('anna', $user->username);
+        ini_set('error_log', $oldlog);
     }
 
     /**
@@ -240,6 +297,12 @@ final class auth_magic_test extends \advanced_testcase {
         $this->assertFalse($this->auth->can_login_with_link($email));
         set_config('auth', 'magic,email');
         $this->assertTrue($this->auth->can_login_with_link($email));
+
+        // Never the guest account, and never accounts that can't log in interactively.
+        $webservice = $this->getDataGenerator()->create_user(['auth' => 'webservice']);
+        set_config('auth', 'magic,email,webservice');
+        $this->assertFalse($this->auth->can_login_with_link(\core_user::get_user($GLOBALS['CFG']->siteguest)));
+        $this->assertFalse($this->auth->can_login_with_link($webservice));
     }
 
     /**

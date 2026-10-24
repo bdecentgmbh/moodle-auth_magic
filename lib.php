@@ -253,13 +253,16 @@ function auth_magic_authmethod_updated(): void {
  * Answer a request for a magic link made for an existing account.
  *
  * The account gets a magic link, or a reminder to use its own login method if it may not use
- * magic links. Suspended and unconfirmed accounts get nothing, and nobody gets more than one
- * email per request interval.
+ * magic links. Suspended and unconfirmed accounts, the guest account and accounts that can't log
+ * in interactively get nothing, and nobody gets more than one email per request interval.
  *
  * @param stdClass $user
  */
 function auth_magic_process_link_request(stdClass $user): void {
-    if (!empty($user->deleted) || !empty($user->suspended) || empty($user->confirmed) || $user->auth === 'nologin') {
+    if (!empty($user->deleted) || !empty($user->suspended) || empty($user->confirmed) || isguestuser($user)) {
+        return;
+    }
+    if (in_array($user->auth, ['nologin', 'webservice'])) {
         return;
     }
     if (!auth_magic_may_send_link_email($user->id)) {

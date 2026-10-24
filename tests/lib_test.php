@@ -167,6 +167,26 @@ final class lib_test extends \advanced_testcase {
     }
 
     /**
+     * The guest account and accounts that can't log in interactively get nothing, whatever the settings.
+     */
+    public function test_process_link_request_ignores_non_interactive_accounts(): void {
+        global $CFG;
+
+        set_config('authmethod', 1, 'auth_magic');
+        set_config('loginoption', 1, 'auth_magic');
+        set_config('auth', 'magic,webservice');
+        $webservice = $this->getDataGenerator()->create_user(['auth' => 'webservice']);
+        $nologin = $this->getDataGenerator()->create_user(['auth' => 'nologin']);
+        $sink = $this->redirectEmails();
+
+        auth_magic_process_link_request(\core_user::get_user($CFG->siteguest));
+        auth_magic_process_link_request($webservice);
+        auth_magic_process_link_request($nologin);
+
+        $this->assertCount(0, $sink->get_messages());
+    }
+
+    /**
      * An account gets at most one email per request interval, whoever asks.
      */
     public function test_process_link_request_is_limited_per_account(): void {

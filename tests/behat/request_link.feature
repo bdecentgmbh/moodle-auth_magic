@@ -5,8 +5,7 @@ Feature: Ask for a magic login link
   I need to get a magic link for my account
 
   Background:
-    Given the following config values are set as admin:
-      | auth | magic |
+    Given I enable "magic" "auth" plugin
     And the following "users" exist:
       | username | firstname | lastname | email               | auth   |
       | user_01  | User      | One      | user_01@example.com | magic  |

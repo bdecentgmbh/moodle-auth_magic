@@ -39,12 +39,12 @@ for a link.
 
 | Setting | Default | What it does |
 |---|---|---|
-| Supports password | Off | Magic accounts can also log in with a password. Without it they have no password |
+| Supports password | Off | Magic accounts can also have a password: they log in with it, change it under *Preferences* and reset it with *Forgotten password*, and admins can set it. Without it, magic accounts have no password and password logins fail. Passwords set while it was on are kept, and work again when it is turned back on |
 | Magic login link expiry | 10 minutes | How long a link works. 0 means links never expire |
 | Minimum time between magic link emails | 2 minutes | An account gets at most one email within this time, however often anybody asks. 0 turns the limit off |
 | Configure login key link | Only once | *Only once*: a link logs in once. *Until it expires*: a link logs in as often as needed until it expires |
 | Allow Username to get magic link | Off | Users can type their username instead of their email address |
-| Supported authentication method | Magic only | *Magic only*: only magic accounts can use links. *Any method*: accounts with other enabled login methods can use links too |
+| Supported authentication method | Magic only | *Magic only*: only magic accounts can use links. *Any method*: accounts with other enabled login methods can use links too, except web service accounts. Going back to *Magic only* deletes their links |
 
 Accounts with another login method that ask for a link while the plugin supports magic only get an
 email that tells them to use their password, with a link to *Forgotten password*.
@@ -66,7 +66,8 @@ email that tells them to use their password, with a link to *Forgotten password*
   *Supported authentication method* back to *Magic only*, or an account moves to another login method,
   its link stops working and is deleted. Like the core login, accounts whose own login method is
   disabled can't use links.
-- **Suspended, unconfirmed and *No login* accounts** get no links, and their links don't work.
+- **Suspended, unconfirmed and *No login* accounts, web service accounts and the guest account** get
+  no links, and their links don't work.
 - **Emails shared by several accounts** (with *Allow accounts with same email*) match none of them, so
   a link never goes to the wrong account. Those users can ask with their username if you allow it.
 

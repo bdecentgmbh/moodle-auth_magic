@@ -39,14 +39,15 @@ class auth_plugin_magic extends auth_plugin_base {
     }
 
     /**
-     * Don't allow login using login form.
+     * Check a password login, which magic accounts only have if the plugin supports passwords.
      *
      * @param string $username The username
      * @param string $password The password
+     * @return bool
      */
     public function user_login($username, $password) {
         global $DB, $CFG;
-        if (!get_config('auth_magic', 'supportpassword')) {
+        if (!$this->supports_passwords()) {
             return false;
         }
         if (!$user = $DB->get_record('user', ['username' => $username, 'mnethostid' => $CFG->mnet_localhost_id])) {
@@ -70,13 +71,14 @@ class auth_plugin_magic extends auth_plugin_base {
 
 
     /**
-     * No password updates.
+     * Change the password, if the plugin supports passwords.
      *
-     * @param string $user The username
-     * @param string $newpassword The password
+     * @param stdClass $user
+     * @param string $newpassword
+     * @return bool Whether the password was changed
      */
     public function user_update_password($user, $newpassword) {
-        if (get_config('auth_magic', 'supportpassword')) {
+        if ($this->supports_passwords()) {
             $user = get_complete_user_data('id', $user->id);
             // This will also update the stored hash to the latest algorithm
             // if the existing hash is using an out-of-date algorithm (or the
@@ -87,32 +89,41 @@ class auth_plugin_magic extends auth_plugin_base {
     }
 
     /**
-     * Don't store local passwords.
+     * Whether the plugin supports passwords for magic accounts (setting Supports password).
      *
-     * @return bool True.
+     * @return bool
      */
-    public function prevent_local_passwords() {
-        // Just in case, we do not want to loose the passwords.
-        return !get_config('auth_magic', 'supportpassword');
+    protected function supports_passwords(): bool {
+        return !empty(get_config('auth_magic', 'supportpassword'));
     }
 
     /**
-     * No external data sync.
+     * Don't store new passwords unless the plugin supports passwords.
+     *
+     * Passwords stored while it did are kept, in case it does again.
+     *
+     * @return bool
+     */
+    public function prevent_local_passwords() {
+        return !$this->supports_passwords();
+    }
+
+    /**
+     * Magic accounts use the password of the user table if the plugin supports passwords.
      *
      * @return bool
      */
     public function is_internal() {
-        // We do not know if it was internal or external originally.
-        return get_config('auth_magic', 'supportpassword');
+        return $this->supports_passwords();
     }
 
     /**
-     * No changing of password.
+     * Passwords can be changed if the plugin supports passwords.
      *
      * @return bool
      */
     public function can_change_password() {
-        return get_config('auth_magic', 'supportpassword');
+        return $this->supports_passwords();
     }
 
     /**
@@ -126,10 +137,12 @@ class auth_plugin_magic extends auth_plugin_base {
     }
 
     /**
-     * No password resetting.
+     * Passwords can be reset if the plugin supports passwords.
+     *
+     * @return bool
      */
     public function can_reset_password() {
-        return get_config('auth_magic', 'supportpassword');
+        return $this->supports_passwords();
     }
 
     /**
@@ -182,16 +195,23 @@ class auth_plugin_magic extends auth_plugin_base {
      * Whether the user may log in with a magic link.
      *
      * Magic accounts always may. Accounts with other login methods may if the plugin supports any
-     * method and their own method is enabled, as the core login requires.
+     * method and their own method is enabled, as the core login requires. The guest account and
+     * accounts that can't log in interactively at all (No login, Web services) never may.
      *
      * @param stdClass $user
      * @return bool
      */
     public function can_login_with_link(stdClass $user): bool {
+        if (isguestuser($user)) {
+            return false;
+        }
         if ($user->auth === $this->authtype) {
             return true;
         }
-        return !empty(get_config('auth_magic', 'authmethod')) && $user->auth !== 'nologin' && is_enabled_auth($user->auth);
+        if (in_array($user->auth, ['nologin', 'webservice'])) {
+            return false;
+        }
+        return !empty(get_config('auth_magic', 'authmethod')) && is_enabled_auth($user->auth);
     }
 
     /**

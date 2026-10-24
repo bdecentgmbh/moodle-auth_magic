@@ -11,6 +11,7 @@ Changes
 * 2026-10-24 - Security: Link requests need the login token of the login form and send an account at most one email per "Minimum time between magic link emails" (new setting, default 2 minutes)
 * 2026-10-24 - Security: A magic link of another account asks before it switches the logged-in user
 * 2026-10-24 - Security: Links are checked against the supported authentication method when they are used, and removed when an account or the setting no longer allows them
+* 2026-10-24 - Security: The guest account and web service accounts never get or use magic links, also with "Any method"
 * 2026-10-24 - Security: The privacy export no longer contains working login keys, and privacy deletions and uninstalling remove the keys
 * 2026-10-24 - Bugfix: A login link expiry of 0 (never expires) no longer makes link requests loop forever
 * 2026-10-24 - Bugfix: Single-use links work when another user is logged in
