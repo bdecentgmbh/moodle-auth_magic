@@ -87,6 +87,7 @@ $string['keyusemultiple'] = "Until it expires";
 $string['keyuseonce'] = "Only once";
 $string['lastname'] = "Last name";
 $string['linkexpirytime'] = 'Set a magic login link expiry time';
+$string['linknotallowed'] = 'Your account can no longer log in with a magic link. Please log in with your password or the login method of your account.';
 $string['listofmagiclink'] = "Magic user accounts";
 $string['loginexpiry'] = "Magic login link expiry";
 $string['loginexpiryloginlink'] = "The magic login link has expired. You cannot use the magic login link to access the site.";

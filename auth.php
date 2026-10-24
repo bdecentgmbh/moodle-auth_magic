@@ -168,15 +168,30 @@ class auth_plugin_magic extends auth_plugin_base {
     }
 
     /**
+     * Delete the magic link of a user, with its keys.
+     *
+     * @param int $userid
+     */
+    public function delete_magic_instance(int $userid): void {
+        global $DB;
+        $this->delete_keys($userid);
+        $DB->delete_records('auth_magic_loginlinks', ['userid' => $userid]);
+    }
+
+    /**
      * Whether the user may log in with a magic link.
      *
-     * Magic accounts always may. Accounts with other login methods may if the plugin supports any method.
+     * Magic accounts always may. Accounts with other login methods may if the plugin supports any
+     * method and their own method is enabled, as the core login requires.
      *
      * @param stdClass $user
      * @return bool
      */
     public function can_login_with_link(stdClass $user): bool {
-        return $user->auth === $this->authtype || !empty(get_config('auth_magic', 'authmethod'));
+        if ($user->auth === $this->authtype) {
+            return true;
+        }
+        return !empty(get_config('auth_magic', 'authmethod')) && $user->auth !== 'nologin' && is_enabled_auth($user->auth);
     }
 
     /**

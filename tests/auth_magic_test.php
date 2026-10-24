@@ -26,6 +26,8 @@ namespace auth_magic;
 #[\PHPUnit\Framework\Attributes\CoversClass(\auth_plugin_magic::class)]
 #[\PHPUnit\Framework\Attributes\CoversFunction('auth_magic_sent_loginlink_touser')]
 #[\PHPUnit\Framework\Attributes\CoversFunction('auth_magic_get_user_login_link')]
+#[\PHPUnit\Framework\Attributes\CoversFunction('auth_magic_authmethod_updated')]
+#[\PHPUnit\Framework\Attributes\CoversClass(\auth_magic\event\observer::class)]
 final class auth_magic_test extends \advanced_testcase {
     /** @var \auth_plugin_magic */
     protected $auth;
@@ -194,5 +196,85 @@ final class auth_magic_test extends \advanced_testcase {
         $this->assertTrue($this->auth->check_userkey_type($key));
 
         $this->assertCount(0, $sink->get_messages());
+    }
+
+    /**
+     * Other login methods may use links only if the plugin supports any method and they are enabled.
+     */
+    public function test_can_login_with_link(): void {
+        $magic = $this->getDataGenerator()->create_user(['auth' => 'magic']);
+        $manual = $this->getDataGenerator()->create_user(['auth' => 'manual']);
+        $nologin = $this->getDataGenerator()->create_user(['auth' => 'nologin']);
+        $email = $this->getDataGenerator()->create_user(['auth' => 'email']);
+        set_config('auth', 'magic');
+
+        $this->assertTrue($this->auth->can_login_with_link($magic));
+        $this->assertFalse($this->auth->can_login_with_link($manual));
+
+        set_config('authmethod', 1, 'auth_magic');
+        $this->assertTrue($this->auth->can_login_with_link($manual));
+        $this->assertFalse($this->auth->can_login_with_link($nologin));
+        // Like the core login, accounts of a disabled login method can't log in.
+        $this->assertFalse($this->auth->can_login_with_link($email));
+        set_config('auth', 'magic,email');
+        $this->assertTrue($this->auth->can_login_with_link($email));
+    }
+
+    /**
+     * An account that moves to a login method that may not use links loses its link.
+     */
+    public function test_changing_login_method_removes_link(): void {
+        global $DB;
+
+        $user = $this->getDataGenerator()->create_user(['auth' => 'magic']);
+        $other = $this->getDataGenerator()->create_user(['auth' => 'magic']);
+        $changeauth = function (int $userid): void {
+            global $DB;
+            $DB->set_field('user', 'auth', 'manual', ['id' => $userid]);
+            \core\event\user_updated::create_from_userid($userid)->trigger();
+        };
+        set_config('authmethod', 1, 'auth_magic');
+        $changeauth($other->id);
+        $this->assertTrue($DB->record_exists('auth_magic_loginlinks', ['userid' => $other->id]));
+
+        set_config('authmethod', 0, 'auth_magic');
+        $changeauth($user->id);
+        $this->assertFalse($DB->record_exists('auth_magic_loginlinks', ['userid' => $user->id]));
+        $this->assertFalse($DB->record_exists('user_private_key', ['userid' => $user->id, 'script' => 'auth/magic']));
+    }
+
+    /**
+     * Going back to magic only removes the links of accounts with other login methods.
+     */
+    public function test_authmethod_updated_removes_links_of_other_methods(): void {
+        global $DB;
+
+        set_config('authmethod', 1, 'auth_magic');
+        $manual = $this->getDataGenerator()->create_user(['auth' => 'manual']);
+        $magic = $this->getDataGenerator()->create_user(['auth' => 'magic']);
+        $this->auth->create_magic_instance($manual, false);
+
+        auth_magic_authmethod_updated();
+        $this->assertTrue($DB->record_exists('auth_magic_loginlinks', ['userid' => $manual->id]));
+
+        set_config('authmethod', 0, 'auth_magic');
+        auth_magic_authmethod_updated();
+        $this->assertFalse($DB->record_exists('auth_magic_loginlinks', ['userid' => $manual->id]));
+        $this->assertFalse($DB->record_exists('user_private_key', ['userid' => $manual->id, 'script' => 'auth/magic']));
+        $this->assertTrue($DB->record_exists('auth_magic_loginlinks', ['userid' => $magic->id]));
+        $this->assertTrue($DB->record_exists('user_private_key', ['userid' => $magic->id, 'script' => 'auth/magic']));
+    }
+
+    /**
+     * Deleting an account deletes its link and keys.
+     */
+    public function test_deleting_user_removes_link(): void {
+        global $DB;
+
+        $user = $this->getDataGenerator()->create_user(['auth' => 'magic']);
+        delete_user($user);
+
+        $this->assertFalse($DB->record_exists('auth_magic_loginlinks', ['userid' => $user->id]));
+        $this->assertFalse($DB->record_exists('user_private_key', ['userid' => $user->id, 'script' => 'auth/magic']));
     }
 }

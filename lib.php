@@ -226,6 +226,21 @@ function auth_magic_may_send_link_email(int $userid): bool {
 }
 
 /**
+ * Remove the magic links of accounts with other login methods when the plugin goes back to magic only.
+ *
+ * Called when the supported authentication method setting changes.
+ */
+function auth_magic_authmethod_updated(): void {
+    global $DB;
+    if (get_config('auth_magic', 'authmethod')) {
+        return;
+    }
+    $select = 'userid IN (SELECT id FROM {user} WHERE auth <> :auth)';
+    $DB->delete_records_select('user_private_key', "script = :script AND $select", ['script' => 'auth/magic', 'auth' => 'magic']);
+    $DB->delete_records_select('auth_magic_loginlinks', $select, ['auth' => 'magic']);
+}
+
+/**
  * Answer a request for a magic link made for an existing account.
  *
  * The account gets a magic link, or a reminder to use its own login method if it may not use

@@ -59,3 +59,24 @@ Feature: Log in with a magic link
     Then I should not see "Do you want to log out"
     And I visit "/user/profile.php"
     And I should see "User One"
+
+  Scenario: Other login methods use links only while the plugin supports them
+    Given the following "users" exist:
+      | username | firstname | lastname | email               | auth   |
+      | user_03  | User      | Three    | user_03@example.com | manual |
+    And the following config values are set as admin:
+      | authmethod   | 1    | auth_magic |
+      | loginkeytype | more | auth_magic |
+    And I visit "/auth/magic/login.php"
+    And I set the field "Email address" to "user_03@example.com"
+    And I press "Get a magic link via email"
+    When I open the magic login link of "user_03"
+    And I visit "/user/profile.php"
+    Then I should see "User Three"
+    And I log out
+    And the following config values are set as admin:
+      | authmethod | 0 | auth_magic |
+    And I open the last magic login link again
+    And I should see "Your account can no longer log in with a magic link."
+    And I open the last magic login link again
+    And I should see "This magic link is no longer valid."

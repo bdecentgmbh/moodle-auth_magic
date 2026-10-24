@@ -106,6 +106,13 @@ try {
 $user = core_user::get_user($key->userid, '*', MUST_EXIST);
 core_user::require_active_user($user, true, true);
 
+if (!$auth->can_login_with_link($user)) {
+    // The link was created before the site stopped allowing magic links for this account.
+    $auth->delete_magic_instance($user->id);
+    $returnurl = isloggedin() && !isguestuser() ? new moodle_url('/') : get_login_url();
+    redirect($returnurl, get_string('linknotallowed', 'auth_magic'), null, \core\output\notification::NOTIFY_ERROR);
+}
+
 if (isloggedin() && !isguestuser()) {
     if ($USER->id == $user->id) {
         redirect(core_login_get_return_url());
@@ -132,8 +139,7 @@ if (isloggedin() && !isguestuser()) {
 
 if (get_config('auth_magic', 'loginkeytype') == 'once') {
     // A single-use link is used up by the login it makes.
-    delete_user_key('auth/magic', $user->id);
-    $DB->delete_records('auth_magic_loginlinks', ['userid' => $user->id]);
+    $auth->delete_magic_instance($user->id);
 }
 
 $user = get_complete_user_data('id', $user->id, null, true);

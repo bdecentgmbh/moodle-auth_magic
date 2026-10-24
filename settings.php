@@ -73,5 +73,6 @@ if ($ADMIN->fulltree) {
     $title = get_string("strsupportauth", "auth_magic");
     $desc = "";
     $setting = new admin_setting_configselect($name, $title, $desc, 0, $options);
+    $setting->set_updatedcallback('auth_magic_authmethod_updated');
     $settings->add($setting);
 }
