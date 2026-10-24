@@ -25,6 +25,7 @@ namespace auth_magic;
  */
 #[\PHPUnit\Framework\Attributes\CoversFunction('auth_magic_get_email_user')]
 #[\PHPUnit\Framework\Attributes\CoversFunction('auth_magic_process_link_request')]
+#[\PHPUnit\Framework\Attributes\CoversFunction('auth_magic_may_send_link_email')]
 final class lib_test extends \advanced_testcase {
     #[\Override]
     public static function setUpBeforeClass(): void {
@@ -117,6 +118,7 @@ final class lib_test extends \advanced_testcase {
         global $DB;
 
         $user = $this->getDataGenerator()->create_user(['auth' => 'manual']);
+        set_config('requestinterval', 0, 'auth_magic');
         $sink = $this->redirectMessages();
 
         auth_magic_process_link_request($user);
@@ -146,5 +148,38 @@ final class lib_test extends \advanced_testcase {
         auth_magic_process_link_request($unconfirmed);
 
         $this->assertCount(0, $sink->get_messages());
+    }
+
+    /**
+     * An account gets at most one email per request interval, whoever asks.
+     */
+    public function test_process_link_request_is_limited_per_account(): void {
+        $user = $this->getDataGenerator()->create_user(['auth' => 'magic']);
+        $other = $this->getDataGenerator()->create_user(['auth' => 'magic']);
+        set_config('requestinterval', 2 * MINSECS, 'auth_magic');
+        $sink = $this->redirectMessages();
+
+        auth_magic_process_link_request($user);
+        auth_magic_process_link_request($user);
+        auth_magic_process_link_request($other);
+        $this->assertEquals([$user->id, $other->id], array_column($sink->get_messages(), 'useridto'));
+
+        // Once the interval has passed, the account gets the next email.
+        $sink->clear();
+        set_user_preference('auth_magic_lastlinkemail', time() - 2 * MINSECS - 1, $user);
+        auth_magic_process_link_request($user);
+        $this->assertCount(1, $sink->get_messages());
+    }
+
+    /**
+     * An interval of 0 turns the limit off.
+     */
+    public function test_may_send_link_email_without_interval(): void {
+        $user = $this->getDataGenerator()->create_user(['auth' => 'magic']);
+        set_config('requestinterval', 0, 'auth_magic');
+
+        $this->assertTrue(auth_magic_may_send_link_email($user->id));
+        $this->assertTrue(auth_magic_may_send_link_email($user->id));
+        $this->assertNull(get_user_preferences('auth_magic_lastlinkemail', null, $user));
     }
 }

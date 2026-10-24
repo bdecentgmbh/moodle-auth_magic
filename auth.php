@@ -290,8 +290,10 @@ class auth_plugin_magic extends auth_plugin_base {
                 if (!$relateduser->suspended && !$relateduser->deleted) {
                     if ($relateduser->auth == 'magic' || $accessauthtoall) {
                         $messagestr = get_string('loginexpiryloginlinkwithupdate', 'auth_magic');
-                        $this->update_new_loginkey($relateduser, $instance);
-                        auth_magic_sent_loginlink_touser($relateduser->id, false, true);
+                        if (auth_magic_may_send_link_email($relateduser->id)) {
+                            $this->update_new_loginkey($relateduser, $instance);
+                            auth_magic_sent_loginlink_touser($relateduser->id, false, true);
+                        }
                         // Give the response only for non-login user logged in
                         // User show the prompt to display the access different account.
                         if (!isloggedin()) {

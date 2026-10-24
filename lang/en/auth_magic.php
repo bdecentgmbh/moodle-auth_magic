@@ -170,6 +170,8 @@ We look forward to having you as a member of our community!
 Best regards,
 The {$a->sitename} Team';
 $string['registrationsubject'] = "Magic authentication Registration link";
+$string['requestinterval'] = 'Minimum time between magic link emails';
+$string['requestinterval_desc'] = 'Anybody can ask for a magic link for any email address. To keep this from flooding inboxes, an account gets at most one magic link email within this time, including the notice for accounts that use another login method. Requests in between get the usual answer but no email. 0 turns the limit off.';
 $string['sendlink'] = "Send the magic link to the user";
 $string['sentinvitationlink'] = "Sent the invitation link to the mail";
 $string['sentlinktouser'] = "If you supplied a correct email address, an email containing a magic login link should have been sent to you.";

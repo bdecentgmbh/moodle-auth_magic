@@ -94,8 +94,16 @@ define([], function() {
             uservalue.setAttribute("name", "uservalue");
             uservalue.setAttribute("value", userValue);
 
+            // The login token of the login form shows that the request comes from this site.
+            var tokenField = document.querySelector("form#login input[name=\"logintoken\"]");
+            var loginToken = document.createElement("input");
+            loginToken.setAttribute("type", "hidden");
+            loginToken.setAttribute("name", "logintoken");
+            loginToken.setAttribute("value", tokenField ? tokenField.value : "");
+
             form.appendChild(magicLogin);
             form.appendChild(uservalue);
+            form.appendChild(loginToken);
 
             MagicLink.parentNode.appendChild(form);
 

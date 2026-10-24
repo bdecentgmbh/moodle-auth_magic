@@ -39,7 +39,14 @@ if ($ADMIN->fulltree) {
     $setting = new admin_setting_configduration($name, $title, $desc, 10 * MINSECS);
     $settings->add($setting);
 
-    // Magic invitation link expiry.
+    // Minimum time between two magic link emails to the same account.
+    $name = "auth_magic/requestinterval";
+    $title = get_string("requestinterval", "auth_magic");
+    $desc = get_string("requestinterval_desc", "auth_magic");
+    $setting = new admin_setting_configduration($name, $title, $desc, 2 * MINSECS, MINSECS);
+    $settings->add($setting);
+
+    // Magic login key usage.
     $name = "auth_magic/loginkeytype";
     $title = get_string("loginkeytype", "auth_magic");
     $desc = get_string("loginkeytype_desc", "auth_magic");

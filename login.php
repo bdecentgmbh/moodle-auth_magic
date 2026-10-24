@@ -35,6 +35,12 @@ $magiclogin = optional_param('magiclogin', 0, PARAM_INT);
 
 // A request for a magic link, posted from the login page.
 if ($magiclogin) {
+    // Like the login form, only accept requests that carry the login token of the session.
+    if (!\core\session\manager::validate_login_token(optional_param('logintoken', '', PARAM_ALPHANUM))) {
+        $SESSION->loginerrormsg = get_string('invalidlogin');
+        redirect(get_login_url());
+    }
+
     $uservalue = trim(optional_param('uservalue', '', PARAM_NOTAGS));
     $isemail = validate_email($uservalue);
     if (!$isemail && ($uservalue === '' || !get_config('auth_magic', 'loginoption'))) {

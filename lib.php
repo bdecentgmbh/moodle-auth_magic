@@ -195,15 +195,41 @@ function auth_magic_get_email_user($email) {
 }
 
 /**
+ * Whether the user may be sent another email that anybody can trigger, such as a requested link.
+ *
+ * A user gets at most one such email within the request interval of the plugin. If one may be
+ * sent now, the time is recorded.
+ *
+ * @param int $userid
+ * @return bool
+ */
+function auth_magic_may_send_link_email(int $userid): bool {
+    $interval = (int) get_config('auth_magic', 'requestinterval');
+    if ($interval <= 0) {
+        return true;
+    }
+    $now = time();
+    if ((int) get_user_preferences('auth_magic_lastlinkemail', 0, $userid) > $now - $interval) {
+        return false;
+    }
+    set_user_preference('auth_magic_lastlinkemail', $now, $userid);
+    return true;
+}
+
+/**
  * Answer a request for a magic link made for an existing account.
  *
  * The account gets a magic link, or a reminder to use its own login method if it may not use
- * magic links. Suspended and unconfirmed accounts get nothing.
+ * magic links. Suspended and unconfirmed accounts get nothing, and nobody gets more than one
+ * email per request interval.
  *
  * @param stdClass $user
  */
 function auth_magic_process_link_request(stdClass $user): void {
     if (!empty($user->deleted) || !empty($user->suspended) || empty($user->confirmed) || $user->auth === 'nologin') {
+        return;
+    }
+    if (!auth_magic_may_send_link_email($user->id)) {
         return;
     }
     $auth = get_auth_plugin('magic');
