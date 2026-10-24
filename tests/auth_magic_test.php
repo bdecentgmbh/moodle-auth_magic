@@ -57,6 +57,20 @@ final class auth_magic_test extends \advanced_testcase {
     }
 
     /**
+     * Check an expired key, which ends in a redirect to tell the user about the new link.
+     *
+     * @param string $key
+     */
+    protected function open_expired_link(string $key): void {
+        try {
+            $this->auth->check_userkey_type($key);
+            $this->fail('An expired link should redirect.');
+        } catch (\moodle_exception $e) {
+            $this->assertEquals('redirecterrordetected', $e->errorcode);
+        }
+    }
+
+    /**
      * Magic users can't log in with a password unless the plugin supports passwords.
      */
     public function test_users_can_not_login(): void {
@@ -171,11 +185,9 @@ final class auth_magic_test extends \advanced_testcase {
         $instance = $DB->get_record('auth_magic_loginlinks', ['userid' => $user->id]);
         $DB->set_field('auth_magic_loginlinks', 'loginexpiry', time() - 1, ['id' => $instance->id]);
         set_config('requestinterval', 2 * MINSECS, 'auth_magic');
-        // Logged in, so that the check doesn't redirect to the login page.
-        $this->setUser($this->getDataGenerator()->create_user());
         $sink = $this->redirectEmails();
 
-        $this->auth->check_userkey_type($instance->loginuserkey);
+        $this->open_expired_link($instance->loginuserkey);
         $messages = $sink->get_messages();
         $this->assertCount(1, $messages);
         $newkey = $DB->get_field('auth_magic_loginlinks', 'loginuserkey', ['userid' => $user->id]);
@@ -185,7 +197,7 @@ final class auth_magic_test extends \advanced_testcase {
         // Within the interval, the old link doesn't send another one.
         $sink->clear();
         $DB->set_field('auth_magic_loginlinks', 'loginexpiry', time() - 1, ['userid' => $user->id]);
-        $this->auth->check_userkey_type($newkey);
+        $this->open_expired_link($newkey);
         $this->assertCount(0, $sink->get_messages());
         $this->assertEquals($newkey, $DB->get_field('auth_magic_loginlinks', 'loginuserkey', ['userid' => $user->id]));
     }

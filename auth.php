@@ -294,11 +294,11 @@ class auth_plugin_magic extends auth_plugin_base {
     /**
      * Send a new link if the login key has expired.
      *
-     * The user is told on the login page that a new link is on its way, unless the account may
+     * The user is then redirected and told that a new link is on its way, unless the account may
      * not use magic links any more. Then the key is refused like any other expired key.
      *
      * @param string $key
-     * @return bool
+     * @return bool True if the key hasn't expired or gets no new link
      */
     public function check_userkey_type($key) {
         global $DB;
@@ -315,14 +315,6 @@ class auth_plugin_magic extends auth_plugin_base {
             $this->update_new_loginkey($user, $instance);
             auth_magic_sent_loginlink_touser($user->id, false, true);
         }
-        if (!isloggedin()) {
-            redirect(
-                get_login_url(),
-                get_string('loginexpiryloginlinkwithupdate', 'auth_magic'),
-                null,
-                \core\output\notification::NOTIFY_INFO
-            );
-        }
-        return true;
+        auth_magic_redirect_with_message(get_string('loginexpiryloginlinkwithupdate', 'auth_magic'));
     }
 }

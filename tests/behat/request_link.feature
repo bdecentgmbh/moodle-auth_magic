@@ -17,14 +17,15 @@ Feature: Ask for a magic login link
     Given I visit "/login/index.php"
     When I set the field "Username" to "user_01@example.com"
     And I click on the magic link button
-    Then I should see "If you supplied a correct email address, an email containing a magic login link should have been sent to you."
+    # Like the messages of the login page itself, the answer is part of the login form.
+    Then I should see "If you supplied a correct email address, an email containing a magic login link should have been sent to you." in the "#logininfomessage" "css_element"
     And I set the field "Username" to "nobody@example.com"
     And I click on the magic link button
     And I should see "If you supplied a correct email address, an email containing a magic login link should have been sent to you."
     And I should not see "not found"
     And I set the field "Username" to "user_01"
     And I click on the magic link button
-    And I should see "Invalid email address"
+    And I should see "Invalid email address" in the "#loginerrormessage" "css_element"
 
   @javascript
   Scenario: Without a username the button asks for the email address

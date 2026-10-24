@@ -213,6 +213,28 @@ function auth_magic_may_send_link_email(int $userid): bool {
 }
 
 /**
+ * Return to the login page with a message, or to the home page if the user is logged in.
+ *
+ * The login page shows the message in its form, like its own messages, so that it fits the login
+ * layout of every theme. A page notification would sit next to the form in some of them.
+ *
+ * @param string $message
+ * @param string $type A \core\output\notification type, error or info
+ */
+function auth_magic_redirect_with_message(string $message, string $type = \core\output\notification::NOTIFY_INFO): void {
+    global $SESSION;
+    if (isloggedin() && !isguestuser()) {
+        redirect(new moodle_url('/'), $message, null, $type);
+    }
+    if ($type === \core\output\notification::NOTIFY_ERROR) {
+        $SESSION->loginerrormsg = $message;
+    } else {
+        $SESSION->logininfomsg = $message;
+    }
+    redirect(get_login_url());
+}
+
+/**
  * Remove the magic links of accounts with other login methods when the plugin goes back to magic only.
  *
  * Called when the supported authentication method setting changes.

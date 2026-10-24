@@ -38,33 +38,26 @@ $magiclogin = optional_param('magiclogin', 0, PARAM_INT);
 if ($magiclogin) {
     // Like the login form, only accept requests that carry the login token of the session.
     if (!\core\session\manager::validate_login_token(optional_param('logintoken', '', PARAM_ALPHANUM))) {
-        $SESSION->loginerrormsg = get_string('invalidlogin');
-        redirect(get_login_url());
+        auth_magic_redirect_with_message(get_string('invalidlogin'), \core\output\notification::NOTIFY_ERROR);
     }
 
     $uservalue = trim(optional_param('uservalue', '', PARAM_NOTAGS));
     $isemail = validate_email($uservalue);
     if (!$isemail && ($uservalue === '' || !get_config('auth_magic', 'loginoption'))) {
-        $SESSION->loginerrormsg = get_string('invalidemail');
-        redirect(get_login_url());
+        auth_magic_redirect_with_message(get_string('invalidemail'), \core\output\notification::NOTIFY_ERROR);
     }
 
     $user = auth_magic_get_email_user($uservalue);
     if (!$user && empty($CFG->protectusernames)) {
         // The site allows telling visitors that there is no such account.
-        $SESSION->loginerrormsg = get_string($isemail ? 'emailnotfound' : 'usernamenotfound');
-        redirect(get_login_url());
+        $notfound = get_string($isemail ? 'emailnotfound' : 'usernamenotfound');
+        auth_magic_redirect_with_message($notfound, \core\output\notification::NOTIFY_ERROR);
     }
     if ($user && (!isloggedin() || isguestuser())) {
         auth_magic_process_link_request($user);
     }
     // The same answer for every account, so that it doesn't tell whether the account exists.
-    redirect(
-        get_login_url(),
-        get_string($isemail ? 'sentlinktouser' : 'sentlinktousername', 'auth_magic'),
-        null,
-        \core\output\notification::NOTIFY_SUCCESS
-    );
+    auth_magic_redirect_with_message(get_string($isemail ? 'sentlinktouser' : 'sentlinktousername', 'auth_magic'));
 }
 
 $auth = get_auth_plugin('magic');
@@ -99,8 +92,7 @@ try {
     $key = validate_user_key($keyvalue, 'auth/magic', null);
 } catch (moodle_exception $e) {
     // Used up, replaced by a newer link or expired.
-    $returnurl = isloggedin() && !isguestuser() ? new moodle_url('/') : get_login_url();
-    redirect($returnurl, get_string('invalidlink', 'auth_magic'), null, \core\output\notification::NOTIFY_ERROR);
+    auth_magic_redirect_with_message(get_string('invalidlink', 'auth_magic'), \core\output\notification::NOTIFY_ERROR);
 }
 
 $user = core_user::get_user($key->userid, '*', MUST_EXIST);
@@ -109,8 +101,7 @@ core_user::require_active_user($user, true, true);
 if (!$auth->can_login_with_link($user)) {
     // The link was created before the site stopped allowing magic links for this account.
     $auth->delete_magic_instance($user->id);
-    $returnurl = isloggedin() && !isguestuser() ? new moodle_url('/') : get_login_url();
-    redirect($returnurl, get_string('linknotallowed', 'auth_magic'), null, \core\output\notification::NOTIFY_ERROR);
+    auth_magic_redirect_with_message(get_string('linknotallowed', 'auth_magic'), \core\output\notification::NOTIFY_ERROR);
 }
 
 if (isloggedin() && !isguestuser()) {
