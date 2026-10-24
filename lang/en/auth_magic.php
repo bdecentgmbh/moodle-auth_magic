@@ -60,22 +60,18 @@ $string['loginoptiondesc'] = "Enable this setting to login using the username pr
 $string['loginsubject'] = '{$a}: Magic authentication via login';
 $string['magiclinkprovider'] = 'Magic link via email';
 $string['magiconly'] = "Magic only";
-$string['pluginisdisabled'] = 'The magic authentication plugin is disabled.';
-$string['pluginname'] = 'Magic authentication';
+$string['nomagiclinkforgotten'] = 'If you have forgotten your password, you can reset it: {$a} <br>';
+$string['nomagiclinkmessage'] = 'Hi {$a->fullname},
 
+somebody, probably you, asked for a magic link to log in to \'{$a->sitename}\' with your account.
 
-$string['preventmagicauthmessage'] = 'Hi {$a->fullname},
-
-A new account has been requested at \'{$a->sitename}\' using your email address. <br>
-
-<strong> Note: </strong> Authenticating using a Magic link is not supported for your account, please use your password instead.
-
-<br>
-
-{$a->forgothtml} <br>
+Your account can\'t log in with a magic link. Please log in the way you usually do.{$a->forgotten}
 
 If you need help, please contact the site administrator,
 {$a->admin}';
+$string['nomagiclinksubject'] = '{$a}: Logging in to your account';
+$string['pluginisdisabled'] = 'The magic authentication plugin is disabled.';
+$string['pluginname'] = 'Magic authentication';
 $string['privacy:metadata:auth_magic:loginexpiry'] = 'The date that the login key is valid until';
 $string['privacy:metadata:auth_magic:loginuserkey'] = 'The value of the user login key';
 $string['privacy:metadata:auth_magic:magiclogin'] = 'The magic login link of the user';
@@ -94,39 +90,5 @@ $string['sentlinktouser'] = "If you supplied a correct email address, an email c
 $string['sentlinktousername'] = "If you supplied a correct username, an email containing a magic login link should have been sent to your email address.";
 $string['strsupportauth'] = "Supported authentication method";
 $string['strsupportpassword'] = "Supports password";
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 $string['switchaccount'] = 'Switch account';
 $string['switchaccountconfirm'] = 'You are logged in as {$a->current}. Do you want to log out and log in as {$a->target}?';

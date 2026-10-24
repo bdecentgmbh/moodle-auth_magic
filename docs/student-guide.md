@@ -37,7 +37,8 @@ If you open a link while somebody else is logged in on the same browser, you are
 them out and log in as you. Click *Cancel* if you didn't expect this, for example because the link
 came from somebody else.
 
-## Accounts with a password
+## Accounts that can't use magic links
 
-If your account uses a password, the site may email you a reminder to log in with your password
-instead, with a link to reset it.
+If your account can't log in with a magic link, for example because you log in with a password or
+another service, the email tells you to log in the way you usually do. If you can reset your
+password on this site, it links to the page for that.

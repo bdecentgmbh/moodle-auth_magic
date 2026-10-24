@@ -141,6 +141,10 @@ final class lib_test extends \advanced_testcase {
         $messages = $sink->get_messages();
         $this->assertCount(1, $messages);
         $this->assertStringNotContainsString('/auth/magic/login.php', $this->email_text($messages[0]));
+        $this->assertStringContainsString(
+            'log in with a magic link. Please log in the way you usually do.',
+            $this->email_text($messages[0])
+        );
         $this->assertFalse($DB->record_exists('auth_magic_loginlinks', ['userid' => $user->id]));
 
         $sink->clear();
@@ -150,6 +154,32 @@ final class lib_test extends \advanced_testcase {
         $this->assertCount(1, $messages);
         $this->assertStringContainsString('/auth/magic/login.php?key=', $this->email_text($messages[0]));
         $this->assertTrue($DB->record_exists('auth_magic_loginlinks', ['userid' => $user->id]));
+    }
+
+    /**
+     * The notice for other login methods offers a password reset only if the method can reset passwords.
+     */
+    public function test_notice_offers_password_reset_only_if_possible(): void {
+        set_config('requestinterval', 0, 'auth_magic');
+        set_config('auth', 'magic,oauth2');
+        $manual = $this->getDataGenerator()->create_user(['auth' => 'manual']);
+        $oauth2 = $this->getDataGenerator()->create_user(['auth' => 'oauth2']);
+        $disabled = $this->getDataGenerator()->create_user(['auth' => 'email']);
+        $sink = $this->redirectEmails();
+
+        foreach ([$manual, $oauth2, $disabled] as $user) {
+            auth_magic_process_link_request($user);
+        }
+
+        $texts = array_map(fn($email) => $this->email_text($email), $sink->get_messages());
+        $this->assertCount(3, $texts);
+        $this->assertStringContainsString('/login/forgot_password.php', $texts[0]);
+        $this->assertStringNotContainsString('/login/forgot_password.php', $texts[1]);
+        $this->assertStringNotContainsString('/login/forgot_password.php', $texts[2]);
+        foreach ($texts as $text) {
+            $this->assertStringContainsString('asked for a magic link to log in', $text);
+            $this->assertStringNotContainsString('new account', $text);
+        }
     }
 
     /**

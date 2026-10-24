@@ -46,8 +46,9 @@ for a link.
 | Allow Username to get magic link | Off | Users can type their username instead of their email address |
 | Supported authentication method | Magic only | *Magic only*: only magic accounts can use links. *Any method*: accounts with other enabled login methods can use links too, except web service accounts. Going back to *Magic only* deletes their links |
 
-Accounts with another login method that ask for a link while the plugin supports magic only get an
-email that tells them to use their password, with a link to *Forgotten password*.
+Accounts that may not use links get an email that tells them to log in the way they usually do. It
+links to *Forgotten password* only if their login method can reset passwords (for example Manual
+accounts, but not OAuth 2).
 
 ## Behaviour overview
 
@@ -63,8 +64,8 @@ between magic link emails*.
 | Account | Magic only | Any method |
 |---|---|---|
 | Magic authentication | Magic link | Magic link |
-| Other enabled login method (Manual accounts, Email-based self-registration, OAuth 2, LDAP, LTI, …) | Notice to log in with its password | Magic link |
-| Login method whose plugin is disabled | Notice to log in with its password | Notice to log in with its password |
+| Other enabled login method (Manual accounts, Email-based self-registration, OAuth 2, LDAP, LTI, …) | Notice to log in as usual | Magic link |
+| Login method whose plugin is disabled | Notice to log in as usual | Notice to log in as usual |
 | No login, Web services, the guest account | Nothing | Nothing |
 | Suspended or unconfirmed | Nothing | Nothing |
 | No account, a deleted account, an email shared by several accounts | Nothing | Nothing |

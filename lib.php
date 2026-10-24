@@ -140,21 +140,27 @@ function auth_magic_expirytime_convert_datestring($expiry) {
 }
 
 /**
- * Sent the information for non magic auth users.
+ * Tell a user who asked for a magic link that their account can't use one.
+ *
+ * The email offers to reset the password only if the login method of the account can reset it.
+ *
  * @param int $userid
- * @return void
+ * @return bool Whether the email was sent
  */
 function auth_magic_requiredmail_magic_authentication($userid) {
     $site = get_site();
     $user = \core_user::get_user($userid);
-    $forgothtml = html_writer::link(new moodle_url('/login/forgot_password.php'), get_string('forgotten'));
-    $subject = get_string('loginsubject', 'auth_magic', format_string($site->fullname));
+    $subject = get_string('nomagiclinksubject', 'auth_magic', format_string($site->fullname));
     $data = new stdClass();
     $data->sitename = format_string($site->fullname);
     $data->admin = generate_email_signoff();
     $data->fullname = fullname($user);
-    $data->forgothtml = $forgothtml;
-    $messagehtml = text_to_html(get_string('preventmagicauthmessage', 'auth_magic', $data), false, false, true);
+    $data->forgotten = '';
+    if (is_enabled_auth($user->auth) && get_auth_plugin($user->auth)->can_reset_password()) {
+        $link = html_writer::link(new moodle_url('/login/forgot_password.php'), get_string('forgotten'));
+        $data->forgotten = "\n\n" . get_string('nomagiclinkforgotten', 'auth_magic', $link);
+    }
+    $messagehtml = text_to_html(get_string('nomagiclinkmessage', 'auth_magic', $data), false, false, true);
     $messageplain = html_to_text($messagehtml);
     $user->mailformat = 1;
     return auth_magic_messagetouser($user, $subject, $messageplain, $messagehtml);

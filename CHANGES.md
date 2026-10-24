@@ -22,6 +22,7 @@ Changes
 * 2026-10-24 - Improvement: The plugin no longer turns on "Allow log in via email" for password logins
 * 2026-10-24 - Improvement: Links follow changes of the site URL; free no longer creates unused invitation keys
 * 2026-10-24 - Improvement: A used or replaced link explains this on the login page
+* 2026-10-24 - Improvement: Accounts that can't use links are told to log in as usual, with a password reset link only if their login method can reset passwords
 
 ### v1.0.1 (Release Candidate)
 Compatibility: Moodle 3.9 - 4.3
