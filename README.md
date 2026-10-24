@@ -24,7 +24,7 @@ sign-up and registration campaigns are part of
 
 ## Requirements
 
-Moodle 4.0 to 4.5. Outgoing email must work, as links are sent by email only.
+Moodle 4.5 to 5.3. Outgoing email must work, as links are sent by email only.
 
 ## Installation
 

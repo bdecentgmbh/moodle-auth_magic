@@ -6,7 +6,9 @@ Changes
 -------
 
 ### v1.7
+Compatibility: Moodle 4.5 - 5.3
 
+* 2026-10-24 - Compatibility: Moodle 4.5, 5.1, 5.2 and 5.3; Moodle 4.5 or later is required
 * 2026-10-24 - Security: Link requests no longer tell whether an email address or username has an account (unless the site turns off "Protect usernames")
 * 2026-10-24 - Security: Link requests need the login token of the login form and send an account at most one email per "Minimum time between magic link emails" (new setting, default 2 minutes)
 * 2026-10-24 - Security: A magic link of another account asks before it switches the logged-in user

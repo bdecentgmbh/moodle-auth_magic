@@ -18,7 +18,7 @@ a link, see the [student guide](student-guide.md).
 
 | Component | Required? | Effect if missing |
 |---|---|---|
-| Moodle 4.0 to 4.5 | Yes | Other versions are not supported |
+| Moodle 4.5 to 5.3 | Yes | The plugin will not install on older versions |
 | Outgoing email | Yes | Users get no links. Links are sent by email only |
 
 ## Installing and enabling

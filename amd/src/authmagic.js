@@ -23,9 +23,9 @@
 define([], function() {
 
     /**
-    * Controls Custom styles tool action.
-    * @param {object} params
-    */
+     * Makes the magic link button of the login page request a link for the typed username.
+     * @param {object} params
+     */
     var AuthMagic = function(params) {
         var self = this;
         if (params.loginhook) {
@@ -52,7 +52,6 @@ define([], function() {
         MagicLink.addEventListener("click", function(e) {
             var returnurl = e.currentTarget.getAttribute("href");
             var userValue = "";
-            //form#login #username
             var mailSelector = document.querySelectorAll(mailHandler)[0];
             if (mailSelector) {
                 userValue = mailSelector.value.trim();
