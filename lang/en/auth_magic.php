@@ -21,25 +21,9 @@
  * @copyright  2023 bdecent gmbh <https://bdecent.de>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-$string['and'] = "And";
 $string['anymethod'] = "Any method";
 $string['backtologin'] = 'Back to the login page';
-$string['belowpassword'] = "Below password";
-$string['belowusername'] = "Below username";
-$string['configtitle'] = "Magic authentication";
-$string['copyboard'] = "Copy link to cliboard";
-$string['copyinvitationlink'] = "Copy magic invitation link for the user";
-$string['copyloginlink'] = "Copy magic login link for the user";
-$string['courseenrolment'] = "Course enrolment";
-$string['createuserenrolcourse'] = 'has been created and enrolled into "{$a}"';
 $string['currentlylinkexpiry'] = "As the login link has expired, a new link will be sent to your email address when you click on the expired login link.";
-$string['defaultenrolmentduration'] = "Default enrolment duration";
-$string['defaultenrolmentrole'] = "Default enrolment role";
-$string['doesnotaccesskey'] = "Doesn't have access the key in your authentication method";
-$string['emailnotexists'] = "Doesn't exist user email";
-$string['enrolmentduration'] = "Enrolment duration";
-$string['error'] = 'Does not updated magic login link expiration time';
-$string['existuserenrolcourse'] = 'has been enrolled into "{$a}"';
 $string['expiredloginlinkmsg'] = 'Hi {$a->fullname},
 
 you have tried to access \'{$a->sitename}\' with an expired magic login link.
@@ -52,49 +36,15 @@ This link will expire on: <b> {$a->expiry} </b> <br>
 
 If you need help, please contact the site administrator,
 {$a->admin}';
-$string['expiredregistrationmessage'] = 'Hi {$a->fullname},
-
-you have tried to access \'{$a->sitename}\' with an expired registration link.
-
-A new magic link was automatically created for you:
-
-<a href=\'{$a->link}\'> {$a->link} </a> <br>
-
-If you need help, please contact the site administrator,
-{$a->admin}';
-$string['firstname'] = "First name";
 $string['getmagiclinkviagmail'] = "Get a magic link via email";
-$string['hasbeencreated'] = "has been created";
-$string['instructionsforlinktype'] = "Please provide a magic link type, the types are (invitation or login)";
-$string['invailduser'] = "Invaild user";
 $string['invalidlink'] = 'This magic link is no longer valid. It may have been used already or replaced by a newer link. Please ask for a new link.';
-$string['invitationexpiry'] = "Magic invitation link expiry";
-$string['invitationexpiryloginlink'] = "The invitation link has expired. You cannot use the magic login link to access the site.";
-$string['invitationexpiryloginlinkwithupdate'] = "The invitation link has expired. If the email address belongs to an account that supports login via link, a link has been sent via email";
-$string['invitationmessage'] = 'Hi {$a->fullname},
-
-A new account has been requested at \'{$a->sitename}\' using your email address.
-
-To login your new account, please go to this web address login directly instead username and password :
-
-<a href=\'{$a->link}\'> {$a->link} </a> <br>
-
-This link will expire on: <b> {$a->expiry} </b> <br>
-
-If you need help, please contact the site administrator,
-{$a->admin}';
 $string['keyusemultiple'] = "Until it expires";
 $string['keyuseonce'] = "Only once";
-$string['lastname'] = "Last name";
-$string['linkexpirytime'] = 'Set a magic login link expiry time';
 $string['linknotallowed'] = 'Your account can no longer log in with a magic link. Please log in with your password or the login method of your account.';
-$string['listofmagiclink'] = "Magic user accounts";
 $string['loginexpiry'] = "Magic login link expiry";
-$string['loginexpiryloginlink'] = "The magic login link has expired. You cannot use the magic login link to access the site.";
 $string['loginexpiryloginlinkwithupdate'] = "The magic login link has expired. A new magic login link has been sent to your email address.";
 $string['loginkeytype'] = "Configure login key link";
 $string['loginkeytype_desc'] = "This setting allows administrators to configure the behavior of login keys. The login keys can be used only once or until the expiry time.";
-$string['loginlinkbtnpostion'] = 'Magic login link button position';
 $string['loginlinkmessage'] = 'Hi {$a->fullname},
 
 to access your account on \'{$a->sitename}\', please use the following magic link:
@@ -105,25 +55,11 @@ This link will expire on: <b> {$a->expiry} </b> <br>
 
 If you need help, please contact the site administrator,
 {$a->admin}';
-$string['loginlinksubject'] = "Magic authentication login link";
 $string['loginoption'] = "Allow Username to get magic link";
 $string['loginoptiondesc'] = "Enable this setting to login using the username provided in the login form.";
 $string['loginsubject'] = '{$a}: Magic authentication via login';
-$string['magiclink'] = "Magic link";
 $string['magiclinkprovider'] = 'a magic link';
-$string['magicloginlink'] = '{$a}: Magic login link';
 $string['magiconly'] = "Magic only";
-$string['manualinfo'] = "Manual enrolments are not available in this course.";
-$string['more'] = '{$a} more';
-$string['normal'] = "Normal";
-$string['notexists_loginlinkmsg'] = 'Hi {$a->fullname},
-
-You do not have a magic login link, so you don\'t have access to the site using the magic authentication.
-
-If you need help, please contact the site administrator,
-{$a->admin}';
-$string['notsentinvitationlink'] = "Doesn't sent the invitation link to the mail";
-$string['passinfo'] = "- or type in your password -";
 $string['pluginisdisabled'] = 'The magic authentication plugin is disabled.';
 $string['pluginname'] = 'Magic authentication';
 
@@ -140,55 +76,22 @@ A new account has been requested at \'{$a->sitename}\' using your email address.
 
 If you need help, please contact the site administrator,
 {$a->admin}';
-$string['preventmagicauthsubject'] = "Magic authentication support information";
-$string['privacy:metadata:auth_magic'] = 'Magic authentication';
-$string['privacy:metadata:auth_magic:invitationexpiry'] = 'The date that the invitation key is valid until';
-$string['privacy:metadata:auth_magic:invitationuserkey'] = 'The value of the user invitation key';
 $string['privacy:metadata:auth_magic:loginexpiry'] = 'The date that the login key is valid until';
 $string['privacy:metadata:auth_magic:loginuserkey'] = 'The value of the user login key';
-$string['privacy:metadata:auth_magic:magicauth'] = 'The value of whether parent assigns or not.';
-$string['privacy:metadata:auth_magic:magicinvitation'] = 'The value of the user magic invitation link';
 $string['privacy:metadata:auth_magic:magiclogin'] = 'The magic login link of the user';
-$string['privacy:metadata:auth_magic:manualexpiry'] = "The date that set the expiry to the user login key is valid until";
-$string['privacy:metadata:auth_magic:parent'] = 'The value of the userid to assign parent of the user.';
-$string['privacy:metadata:auth_magic:parentrole'] = 'The instance of the parent role id.';
 $string['privacy:metadata:auth_magic:timecreated'] = 'The date and time that the login link was created.';
 $string['privacy:metadata:auth_magic:timemodified'] = 'The date and time that the login link was modified.';
 $string['privacy:metadata:auth_magic:userid'] = 'The ID of the user with this login links';
 $string['privacy:metadata:auth_magic_loginlinks'] = 'Magic links for the user.';
 $string['privacy:metadata:core_userkey'] = 'The key of the magic link, which logs the user in.';
 $string['privacy:metadata:preference:lastlinkemail'] = 'The time the user was last sent a magic link email. It limits how often anybody can make the site send one.';
-$string['quickregisterfornonauth'] = "Magic link via login for only magic authentication has supported the user. If you change others modifiy the supported authentication method settings.";
-$string['quickregistration'] = "Quick registration";
-$string['registrationexpirylink'] = "The registration link has expired. A new registration link has been sent to your email address.";
-$string['registrationmessage'] = 'Hi {$a->emailplaceholder},
-
-Thank you for your interest in joining {$a->sitename}! To create your account, please use the following registration link:
-
-<a href={$a->link}> {$a->link} </a> <br>
-
-If you have any questions or need assistance, please don\'t hesitate to contact the site administrator, {$a->admin}.
-
-We look forward to having you as a member of our community!
-
-Best regards,
-The {$a->sitename} Team';
-$string['registrationsubject'] = "Magic authentication Registration link";
 $string['requestinterval'] = 'Minimum time between magic link emails';
 $string['requestinterval_desc'] = 'Anybody can ask for a magic link for any email address. To keep this from flooding inboxes, an account gets at most one magic link email within this time, including the notice for accounts that use another login method. Requests in between get the usual answer but no email. 0 turns the limit off.';
 $string['requestlinkheading'] = 'Log in with a magic link';
 $string['requestlinkintro'] = 'Enter the email address of your account. You will get an email with a link that logs you in.';
 $string['requestlinkintrousername'] = 'Enter the email address or the username of your account. You will get an email with a link that logs you in.';
-$string['sendlink'] = "Send the magic link to the user";
-$string['sentinvitationlink'] = "Sent the invitation link to the mail";
 $string['sentlinktouser'] = "If you supplied a correct email address, an email containing a magic login link should have been sent to you.";
 $string['sentlinktousername'] = "If you supplied a correct username, an email containing a magic login link should have been sent to your email address.";
-$string['sentregisterlinktouser'] = "If you supplied a correct email address, an email containing a registration link should have been sent to you.";
-$string['statuscreateuser'] = 'has been created';
-$string['strconfirm'] = "Confirmation";
-$string['strenrolinto'] = "enrolled into";
-$string['strkeyaccount'] = "Key account";
-$string['strowneraccountrole'] = "Owner account role";
 $string['strsupportauth'] = "Supported authentication method";
 $string['strsupportpassword'] = "Supports password";
 
@@ -225,8 +128,5 @@ $string['strsupportpassword'] = "Supports password";
 
 
 
-$string['success'] = 'Changes updated';
 $string['switchaccount'] = 'Switch account';
 $string['switchaccountconfirm'] = 'You are logged in as {$a->current}. Do you want to log out and log in as {$a->target}?';
-$string['userhavenotlinks'] = 'User have not any {$a} link';
-$string['userkeyslist'] = "My user accounts";
