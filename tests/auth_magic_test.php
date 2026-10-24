@@ -16,18 +16,23 @@
 
 namespace auth_magic;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(\auth_plugin_magic::class)]
+#[\PHPUnit\Framework\Attributes\CoversFunction('auth_magic_sent_loginlink_touser')]
+#[\PHPUnit\Framework\Attributes\CoversFunction('auth_magic_get_user_login_link')]
+#[\PHPUnit\Framework\Attributes\CoversFunction('auth_magic_authmethod_updated')]
+#[\PHPUnit\Framework\Attributes\CoversClass(\auth_magic\event\observer::class)]
 /**
  * Tests for the magic authentication plugin and its login keys.
  *
  * @package   auth_magic
  * @copyright 2023 bdecent gmbh <https://bdecent.de>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers \auth_plugin_magic
+ * @covers ::auth_magic_sent_loginlink_touser
+ * @covers ::auth_magic_get_user_login_link
+ * @covers ::auth_magic_authmethod_updated
+ * @covers \auth_magic\event\observer
  */
-#[\PHPUnit\Framework\Attributes\CoversClass(\auth_plugin_magic::class)]
-#[\PHPUnit\Framework\Attributes\CoversFunction('auth_magic_sent_loginlink_touser')]
-#[\PHPUnit\Framework\Attributes\CoversFunction('auth_magic_get_user_login_link')]
-#[\PHPUnit\Framework\Attributes\CoversFunction('auth_magic_authmethod_updated')]
-#[\PHPUnit\Framework\Attributes\CoversClass(\auth_magic\event\observer::class)]
 final class auth_magic_test extends \advanced_testcase {
     /** @var \auth_plugin_magic */
     protected $auth;

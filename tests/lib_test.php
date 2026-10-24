@@ -16,16 +16,19 @@
 
 namespace auth_magic;
 
+#[\PHPUnit\Framework\Attributes\CoversFunction('auth_magic_get_email_user')]
+#[\PHPUnit\Framework\Attributes\CoversFunction('auth_magic_process_link_request')]
+#[\PHPUnit\Framework\Attributes\CoversFunction('auth_magic_may_send_link_email')]
 /**
  * Tests for the functions in lib.php.
  *
  * @package    auth_magic
  * @copyright  2026 bdecent gmbh <https://bdecent.de>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers ::auth_magic_get_email_user
+ * @covers ::auth_magic_process_link_request
+ * @covers ::auth_magic_may_send_link_email
  */
-#[\PHPUnit\Framework\Attributes\CoversFunction('auth_magic_get_email_user')]
-#[\PHPUnit\Framework\Attributes\CoversFunction('auth_magic_process_link_request')]
-#[\PHPUnit\Framework\Attributes\CoversFunction('auth_magic_may_send_link_email')]
 final class lib_test extends \advanced_testcase {
     #[\Override]
     public static function setUpBeforeClass(): void {

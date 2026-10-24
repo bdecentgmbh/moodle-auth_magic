@@ -23,6 +23,7 @@ use core_privacy\local\request\userlist;
 use core_privacy\local\request\writer;
 use core_privacy\tests\provider_testcase;
 
+#[\PHPUnit\Framework\Attributes\CoversClass(provider::class)]
 /**
  * Privacy tests for magic authentication.
  *
@@ -30,8 +31,8 @@ use core_privacy\tests\provider_testcase;
  * @category   test
  * @copyright  2023 bdecent gmbh <https://bdecent.de>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers \auth_magic\privacy\provider
  */
-#[\PHPUnit\Framework\Attributes\CoversClass(provider::class)]
 final class provider_test extends provider_testcase {
     #[\Override]
     protected function setUp(): void {
