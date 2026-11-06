@@ -34,56 +34,45 @@ define([], function() {
         return true;
     };
 
-
-    AuthMagic.prototype.getMagicLink = function(params, linkId) {
-        var authSelector = linkId + " .potentialidplist a[title=\"" + params.strbutton + "\"]";
-        var MagicLink = "";
-        if (authSelector) {
-            MagicLink = document.querySelectorAll(authSelector)[0];
-            if (MagicLink === undefined) {
-                authSelector = linkId + " .login-identityproviders a";
-                var MagicLinks = document.querySelectorAll(authSelector);
-                if (MagicLinks.length) {
-                    MagicLinks.forEach(function(item) {
-                        var inner = item.innerHTML.trim();
-                        if (inner == params.strbutton) {
-                            MagicLink = item;
-                        }
-                    });
-                }
-            }
-        }
-        return MagicLink;
+    /**
+     * Find the magic authentication identity-provider link on the login page.
+     *
+     * The link is matched by its href (the auth_magic login endpoint) so it keeps
+     * working regardless of the surrounding login-page markup, which changes
+     * between Moodle versions.
+     *
+     * @return {Element|null} The magic login link, or null if it is not present.
+     */
+    AuthMagic.prototype.getMagicLink = function() {
+        return document.querySelector('a[href*="/auth/magic/login.php"]');
     };
 
-    AuthMagic.prototype.magicLoginHook = function(params) {
+    AuthMagic.prototype.magicLoginHook = function() {
         var self = this;
-        var linkId = "#page-login-index";
-        var MagicLink = self.getMagicLink(params, linkId);
-        if (MagicLink) {
-            self.magicLoginHandler(MagicLink, "form#login #username");
+        var magicLink = self.getMagicLink();
+        if (magicLink) {
+            self.magicLoginHandler(magicLink, "form#login #username");
         }
     };
 
-    AuthMagic.prototype.magicLoginHandler = function(MagicLink, mailHandler) {
-        MagicLink.addEventListener("click", function(e) {
+    AuthMagic.prototype.magicLoginHandler = function(magicLink, mailHandler) {
+        magicLink.addEventListener("click", function(e) {
             e.preventDefault();
 
             var returnurl = e.currentTarget.getAttribute("href");
             var userValue = "";
-            //form#login #username
-            var mailSelector = document.querySelectorAll(mailHandler)[0];
+            // Read the value entered in the login form's username field.
+            var mailSelector = document.querySelector(mailHandler);
             if (mailSelector) {
                 userValue = mailSelector.value;
             }
 
-            // Create a form.
+            // Create a form to post the request to the magic login endpoint.
             var form = document.createElement("form");
             form.setAttribute("method", "post");
             form.setAttribute("action", returnurl);
             form.setAttribute("id", "magic-login-form");
 
-                // Create an input element for Full Name
             var magicLogin = document.createElement("input");
             magicLogin.setAttribute("type", "hidden");
             magicLogin.setAttribute("name", "magiclogin");
@@ -97,10 +86,9 @@ define([], function() {
             form.appendChild(magicLogin);
             form.appendChild(uservalue);
 
-            MagicLink.parentNode.appendChild(form);
+            magicLink.parentNode.appendChild(form);
 
-            var magicForm = document.querySelectorAll("form#magic-login-form")[0];
-            magicForm.submit();
+            document.querySelector("form#magic-login-form").submit();
         });
     };
 
