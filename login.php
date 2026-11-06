@@ -22,7 +22,6 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-use block_mockblock\search\area;
 require_once(__DIR__.'/../../config.php');
 require_once($CFG->dirroot."/auth/magic/lib.php");
 if (!is_enabled_auth('magic')) {

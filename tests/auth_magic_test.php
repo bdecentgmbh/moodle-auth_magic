@@ -30,12 +30,29 @@ use stdClass;
  * Magic authendication test cases defined.
  */
 class auth_magic_test extends \advanced_testcase {
+
+    /** @var \auth_plugin_magic Magic authentication plugin instance. */
+    protected $auth;
+
+    /** @var \testing_data_generator Data generator. */
+    protected $generator;
+
+    /** @var \stdClass First test user. */
+    protected $user1;
+
+    /** @var \stdClass Second test user. */
+    protected $user2;
+
+    /** @var \stdClass Third test user. */
+    protected $user3;
+
     /**
      * Set the admin user as User.
      *
      * @return void
      */
-    public function setup(): void {
+    public function setUp(): void {
+        parent::setUp();
         global $CFG;
         require_once($CFG->dirroot."/auth/magic/auth.php");
         require_once($CFG->dirroot."/auth/magic/lib.php");

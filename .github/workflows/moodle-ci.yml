@@ -1,114 +1,61 @@
 name: Moodle Plugin CI
 
-on: [pull_request]
+on: [push, pull_request]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  test:
-    runs-on: ubuntu-22.04
+  ci:
+    uses: Wunderbyte-GmbH/catalyst-moodle-workflows/.github/workflows/ci.yml@main
+    with:
+      min_php: '8.1'
 
-    services:
-      postgres:
-        image: postgres:13
-        env:
-          POSTGRES_USER: 'postgres'
-          POSTGRES_HOST_AUTH_METHOD: 'trust'
-        ports:
-          - 5432:5432
-        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 3
-      mariadb:
-        image: mariadb:10.6.7
-        env:
-          MYSQL_USER: 'root'
-          MYSQL_ALLOW_EMPTY_PASSWORD: "true"
-        ports:
-          - 3306:3306
-        options: --health-cmd="mysqladmin ping" --health-interval 10s --health-timeout 5s --health-retries 3
+      workarounds: |
+        # WORKAROUND 17/04/2025: The following code is a workaround for the "File is stale and needs to be rebuilt" error
+        # This occurs when AMD modules import Moodle core dependencies
+        # See issue: https://github.com/moodlehq/moodle-plugin-ci/issues/350
+        # This workaround should be removed once the issue is fixed upstream
 
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - php: '7.4'
-            moodle-branch: 'MOODLE_311_STABLE'
-            database: 'mariadb'
-          - php: '8.0'
-            moodle-branch: 'MOODLE_401_STABLE'
-            database: 'mariadb'
-          - php: '8.0'
-            moodle-branch: 'MOODLE_402_STABLE'
-            database: 'pgsql'
-          - php: '8.1'
-            moodle-branch: 'MOODLE_403_STABLE'
-            database: 'mariadb'
+        # Load NVM and use the version from .nvmrc
+        export NVM_DIR="$HOME/.nvm"
+        [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
-    steps:
-      - name: Check out repository code
-        uses: actions/checkout@v2
-        with:
-          path: plugin
+        # Go to moodle directory
+        cd moodle
 
-      - name: Setup PHP ${{ matrix.php }}
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ matrix.php }}
-          ini-values: max_input_vars=6000
-          coverage: none
+        # Use NVM to set Node version and ensure grunt-cli is installed
+        nvm use
+        npm install
+        npm install -g grunt-cli
 
-      - name: Initialise moodle-plugin-ci
-        run: |
-          composer create-project -n --no-dev --prefer-dist moodlehq/moodle-plugin-ci ci ^3
-          echo $(cd ci/bin; pwd) >> $GITHUB_PATH
-          echo $(cd ci/vendor/bin; pwd) >> $GITHUB_PATH
-          sudo locale-gen en_AU.UTF-8
+        # Go back to plugin directory
+        cd ../plugin
 
-      - name: Install moodle-plugin-ci
-        run: |
-          moodle-plugin-ci install --plugin ./plugin --db-host=127.0.0.1
-        env:
-          DB: ${{ matrix.database }}
-          MOODLE_BRANCH: ${{ matrix.moodle-branch }}
-          IGNORE_NAMES: 'login.php'
+        # Pre-build AMD files to avoid stale file warnings
+        echo "=== Building AMD files before CI check ==="
+        grunt --gruntfile ../moodle/Gruntfile.js amd
+        echo "AMD files built successfully"
 
-      - name: PHP Lint
-        if: ${{ always() }}
-        run: moodle-plugin-ci phplint
+        # Go Back to main directory
+        cd ..
 
-      - name: PHP Copy/Paste Detector
-        if: ${{ always() }}
-        run: moodle-plugin-ci phpcpd
+        # END OF WORKAROUND
 
-      - name: PHP Mess Detector
-        if: ${{ always() }}
-        run: moodle-plugin-ci phpmd
+      # If you need to disable specific tests
+      disable_release: true
+      # disable_mustache: false
+      # disable_phpunit: false
+      # disable_grunt: false
+      # disable_phpdoc: false
+      # disable_phpcs: false
+      # disable_phpcpd: false
+      # disable_phplint: false
+      # disable_ci_validate: false
 
-      - name: Moodle Code Checker
-        if: ${{ always() }}
-        run: moodle-plugin-ci codechecker --max-warnings 0
+      # If you need to enable PHPMD
+      enable_phpmd: true
 
-      - name: Moodle PHPDoc Checker
-        if: ${{ always() }}
-        run: moodle-plugin-ci phpdoc
-
-      - name: Validating
-        if: ${{ always() }}
-        run: moodle-plugin-ci validate
-
-      - name: Check upgrade savepoints
-        if: ${{ always() }}
-        run: moodle-plugin-ci savepoints
-
-      - name: Mustache Lint
-        if: ${{ always() }}
-        run: moodle-plugin-ci mustache
-
-      - name: Grunt
-        if: ${{ always() }}
-        run: moodle-plugin-ci grunt
-
-      - name: PHPUnit tests
-        if: ${{ always() }}
-        run: moodle-plugin-ci phpunit
-
-      - name: Behat features
-        if: ${{ always() }}
-        run: moodle-plugin-ci behat --profile chrome
+      # For strict code quality checks
+      codechecker_max_warnings: 0

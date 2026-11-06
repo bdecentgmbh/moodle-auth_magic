@@ -185,7 +185,6 @@ class auth_plugin_magic extends auth_plugin_base {
      * @param int $validuntil
      */
     public function create_user_key($userid, $validuntil) {
-        $config = $this->get_config_data();
         return create_user_key(
             'auth/magic',
             $userid,

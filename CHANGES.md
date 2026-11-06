@@ -5,6 +5,16 @@ bdecentgmbh / moodle-auth_magic
 Changes
 -------
 
+### v1.1.0
+Compatibility: Moodle 4.1 - 5.3
+
+* 2026-11-06 - Compatibility: Moodle 5.0, 5.1, 5.2 and 5.3 support (PHP 8.3 / 8.4)
+* 2026-11-06 - Compatibility: Raised minimum supported Moodle to 4.1 LTS
+* 2026-11-06 - Bugfix: Removed stray `use block_mockblock\search\area;` import from login.php
+* 2026-11-06 - Improvement: Fixed PHP 8.2+ dynamic property deprecations in unit tests
+* 2026-11-06 - Improvement: Removed unused imports and dead code
+* 2026-11-06 - Improvement: Modernised the Moodle Plugin CI matrix (PHP 8.1-8.4, Moodle 4.1-5.3)
+
 ### v1.0.1 (Release Candidate)
 Compatibility: Moodle 3.9 - 4.3
 
