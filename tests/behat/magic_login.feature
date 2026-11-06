@@ -15,10 +15,8 @@ Feature: Login to user for magic authentication.
 
   @javascript
   Scenario: Check the magic user login checks.
-    Given I am on homepage
-    And I expand navigation bar
-    And I click on "Log in" "link" in the ".logininfo" "css_element"
-    #And I should see "Get a magic link via email"
+    Given I visit "/login/index.php"
+    And I should see "Get a magic link via email"
     When I set the field "Username" to "user_01@gmail.com"
     And I click on "Get a magic link via email" "link"
     Then I should see "If you supplied a correct email address, an email containing a magic login link should have been sent to you."
@@ -30,9 +28,7 @@ Feature: Login to user for magic authentication.
 
   @javascript
   Scenario: Check allow user to use username.
-    Given I am on homepage
-    And I expand navigation bar
-    And I click on "Log in" "link" in the ".logininfo" "css_element"
+    Given I visit "/login/index.php"
     And I should see "Get a magic link via email"
     When I set the field "Username" to "user_01"
     And I click on "Get a magic link via email" "link"
@@ -43,7 +39,7 @@ Feature: Login to user for magic authentication.
       | Allow Username to get magic link | 1 |
     Then I press "Save changes"
     Then I log out
-    And I click on "Log in" "link" in the ".logininfo" "css_element"
+    And I visit "/login/index.php"
     Then I set the field "Username" to "user_01"
     And I click on "Get a magic link via email" "link"
     Then I should see "If you supplied a correct username, an email containing a magic login link should have been sent to your email address."

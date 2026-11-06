@@ -10,7 +10,7 @@ jobs:
   ci:
     uses: Wunderbyte-GmbH/catalyst-moodle-workflows/.github/workflows/ci.yml@main
     with:
-      min_php: '8.1'
+      min_php: '8.3'
 
       workarounds: |
         # WORKAROUND 17/04/2025: The following code is a workaround for the "File is stale and needs to be rebuilt" error
@@ -47,7 +47,7 @@ jobs:
       disable_release: true
       # disable_mustache: false
       # disable_phpunit: false
-      # disable_grunt: false
+      disable_grunt: true
       # disable_phpdoc: false
       # disable_phpcs: false
       # disable_phpcpd: false

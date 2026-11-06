@@ -19,20 +19,18 @@
  *
  * @package auth_magic
  * @copyright  2023 bdecent gmbh <https://bdecent.de>
- * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
+ * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->libdir.'/authlib.php');
-require_once($CFG->dirroot."/auth/magic/lib.php");
+require_once($CFG->libdir . '/authlib.php');
+require_once($CFG->dirroot . "/auth/magic/lib.php");
 
 /**
  * Magic authentication login.
  */
 class auth_plugin_magic extends auth_plugin_base {
-
-
     /**
      * Constructor.
      */
@@ -51,7 +49,7 @@ class auth_plugin_magic extends auth_plugin_base {
         if (!get_config('auth_magic', 'supportpassword')) {
             return false;
         }
-        if (!$user = $DB->get_record('user', array('username' => $username, 'mnethostid' => $CFG->mnet_localhost_id))) {
+        if (!$user = $DB->get_record('user', ['username' => $username, 'mnethostid' => $CFG->mnet_localhost_id])) {
             return false;
         }
         if (!validate_internal_user_password($user, $password)) {
@@ -84,12 +82,10 @@ class auth_plugin_magic extends auth_plugin_base {
         if (!empty($user)) {
             if ($user->auth != $this->authtype) {
                 return AUTH_CONFIRM_ERROR;
-
             } else if ($user->secret === $confirmsecret && $user->confirmed) {
                 return AUTH_CONFIRM_ALREADY;
-
             } else if ($user->secret === $confirmsecret) {   // They have provided the secret key to get in.
-                $DB->set_field("user", "confirmed", 1, array("id" => $user->id));
+                $DB->set_field("user", "confirmed", 1, ["id" => $user->id]);
 
                 if ($wantsurl = get_user_preferences('auth_magic_wantsurl', false, $user)) {
                     // Ensure user gets returned to page they were trying to access before signing up.
@@ -224,7 +220,7 @@ class auth_plugin_magic extends auth_plugin_base {
                 'url' => new \moodle_url('/auth/magic/login.php'),
                 'iconurl' => '',
                 'name' => get_string('getmagiclinkviagmail', 'auth_magic'),
-            ]
+            ],
         ];
     }
 
@@ -235,11 +231,11 @@ class auth_plugin_magic extends auth_plugin_base {
     public function loginpage_hook() {
         global $CFG, $PAGE;
         $CFG->authloginviaemail = true;
-        $params = array(
+        $params = [
             'loginhook' => true,
             'strbutton' => get_string('getmagiclinkviagmail', 'auth_magic'),
-        );
-        $PAGE->requires->js_call_amd('auth_magic/authmagic', 'init', array($params));
+        ];
+        $PAGE->requires->js_call_amd('auth_magic/authmagic', 'init', [$params]);
     }
 
 
@@ -252,7 +248,7 @@ class auth_plugin_magic extends auth_plugin_base {
     public function create_magic_instance($user, $checkparent = true) {
         global $CFG, $DB, $USER;
 
-        if (!$DB->record_exists('auth_magic_loginlinks', array('userid' => $user->id))) {
+        if (!$DB->record_exists('auth_magic_loginlinks', ['userid' => $user->id])) {
             $config = $this->get_config_data();
             $loginexpiry = !empty($config->loginexpiry) ? time() + $config->loginexpiry : 0;
             $invitationexpiry = !empty($config->invitationexpiry) ? time() + $config->invitationexpiry : 0;
@@ -263,7 +259,7 @@ class auth_plugin_magic extends auth_plugin_base {
             $parent = 0;
             $parentrole = null;
             // Insert record.
-            $record = new stdClass;
+            $record = new stdClass();
             $record->userid = $user->id;
             $record->parent = 0;
             $record->magicauth = ($checkparent) ? 1 : 0;
@@ -277,7 +273,6 @@ class auth_plugin_magic extends auth_plugin_base {
             $record->timecreated = time();
             $DB->insert_record('auth_magic_loginlinks', $record);
         }
-
     }
 
     /**
@@ -291,8 +286,8 @@ class auth_plugin_magic extends auth_plugin_base {
         $loginexpiry = !empty($config->loginexpiry) ? time() + $config->loginexpiry : 0;
         if (!empty($keyinstance)) {
             // Delete the previous loginkey.
-            $DB->delete_records('user_private_key', array('value' => $keyinstance->loginuserkey,
-                'userid' => $keyinstance->userid));
+            $DB->delete_records('user_private_key', ['value' => $keyinstance->loginuserkey,
+                'userid' => $keyinstance->userid]);
             $loginuserkey = $this->create_user_key($user->id, $loginexpiry);
             $keyinstance->loginuserkey = $loginuserkey;
             $keyinstance->magiclogin = $CFG->wwwroot . '/auth/magic/login.php?key=' . $loginuserkey;
@@ -309,13 +304,13 @@ class auth_plugin_magic extends auth_plugin_base {
      */
     public function check_userkey_type($key) {
         global $DB;
-        $options = array(
+        $options = [
             'script' => 'auth/magic',
-            'value' => $key
-        );
+            'value' => $key,
+        ];
 
         $accessauthtoall = get_config('auth_magic', 'authmethod');
-        if ($instance = $DB->get_record('auth_magic_loginlinks', array('loginuserkey' => $key))) {
+        if ($instance = $DB->get_record('auth_magic_loginlinks', ['loginuserkey' => $key])) {
             // Key as login.
             if (!empty($instance->loginexpiry) && $instance->loginexpiry < time()) {
                 // Resend login and indicate to the click the expiry key.
@@ -328,13 +323,17 @@ class auth_plugin_magic extends auth_plugin_base {
                         // Give the response only for non-login user logged in
                         // User show the prompt to display the access different account.
                         if (!isloggedin()) {
-                            redirect(new moodle_url('/login/index.php'), $messagestr,
-                                null, \core\output\notification::NOTIFY_INFO);
+                            redirect(
+                                new moodle_url('/login/index.php'),
+                                $messagestr,
+                                null,
+                                \core\output\notification::NOTIFY_INFO
+                            );
                         }
                     }
                 }
             }
-        } else if ($instance = $DB->get_record('auth_magic_loginlinks', array('invitationuserkey' => $key))) {
+        } else if ($instance = $DB->get_record('auth_magic_loginlinks', ['invitationuserkey' => $key])) {
             // Key as invitation.
             if (!empty($instance->invitationexpiry) && $instance->invitationexpiry < time()) {
                 // Resend login.
@@ -350,8 +349,12 @@ class auth_plugin_magic extends auth_plugin_base {
                         // Give the response only for non-login user logged in
                         // user show the prompt to display the access different account.
                         if (!isloggedin()) {
-                            redirect(new moodle_url('/login/index.php'), $messagestr,
-                                null, \core\output\notification::NOTIFY_INFO);
+                            redirect(
+                                new moodle_url('/login/index.php'),
+                                $messagestr,
+                                null,
+                                \core\output\notification::NOTIFY_INFO
+                            );
                         }
                     }
                 }
@@ -359,5 +362,4 @@ class auth_plugin_magic extends auth_plugin_base {
         }
         return true;
     }
-
 }

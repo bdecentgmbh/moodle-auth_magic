@@ -26,12 +26,11 @@ namespace auth_magic\privacy;
 
 use stdClass;
 use context;
-
 use core_privacy\local\metadata\collection;
-use \core_privacy\local\request\contextlist;
-use \core_privacy\local\request\userlist;
-use \core_privacy\local\request\approved_userlist;
-use \core_privacy\local\request\approved_contextlist;
+use core_privacy\local\request\contextlist;
+use core_privacy\local\request\userlist;
+use core_privacy\local\request\approved_userlist;
+use core_privacy\local\request\approved_contextlist;
 use core_privacy\local\request\helper;
 use core_privacy\local\request\transform;
 use core_privacy\local\request\writer;
@@ -43,7 +42,6 @@ class provider implements
     \core_privacy\local\metadata\provider,
     \core_privacy\local\request\core_userlist_provider,
     \core_privacy\local\request\plugin\provider {
-
     /**
      * Get list of the data privacy summary meta strings.
      *
@@ -64,7 +62,7 @@ class provider implements
             'invitationexpiry' => 'privacy:metadata:auth_magic:invitationexpiry',
             'manualexpiry' => 'privacy:metadata:auth_magic:manualexpiry',
             'timecreated' => 'privacy:metadata:auth_magic:timecreated',
-            'timemodified' => 'privacy:metadata:auth_magic:timemodified'
+            'timemodified' => 'privacy:metadata:auth_magic:timemodified',
         ];
         $collection->add_database_table('auth_magic_loginlinks', $magicmetadata, 'privacy:metadata:auth_magic_loginlinks');
 
@@ -77,7 +75,7 @@ class provider implements
      * @param   int           $userid       The user to search.
      * @return  contextlist   $contextlist  The list of contexts used in this plugin.
      */
-    public static function get_contexts_for_userid(int $userid) : contextlist {
+    public static function get_contexts_for_userid(int $userid): contextlist {
         $contextlist = new \core_privacy\local\request\contextlist();
         $sql = "SELECT ctx.id
                   FROM {auth_magic_loginlinks} aml
@@ -117,7 +115,7 @@ class provider implements
         global $DB;
         $context = $userlist->get_context();
         if ($context instanceof \context_user) {
-            list($userinsql, $userinparams) = $DB->get_in_or_equal($userlist->get_userids(), SQL_PARAMS_NAMED);
+            [$userinsql, $userinparams] = $DB->get_in_or_equal($userlist->get_userids(), SQL_PARAMS_NAMED);
             if (!empty($userinparams)) {
                 $sql = "userid {$userinsql}";
                 $DB->delete_records_select('auth_magic_loginlinks', $sql, $userinparams);
@@ -192,7 +190,7 @@ class provider implements
             return;
         }
         // Generate the loginlinks list to export.
-        $exportdata = array_map(function($record) {
+        $exportdata = array_map(function ($record) {
             return [
                 'userid' => transform::user($record->userid),
                 'parent' => $record->parent ? transform::user($record->parent) : get_string('none'),
@@ -214,10 +212,10 @@ class provider implements
             // Fetch the generic module data for the note.
             $contextdata = helper::get_context_data($context, $user);
             $contextdata = (object)array_merge((array)$contextdata, $exportdata);
-            writer::with_context($context)->export_data([get_string('privacy:metadata:auth_magic', 'auth_magic').' '.$user->id],
-            $contextdata);
+            writer::with_context($context)->export_data(
+                [get_string('privacy:metadata:auth_magic', 'auth_magic') . ' ' . $user->id],
+                $contextdata
+            );
         }
-
     }
-
 }
