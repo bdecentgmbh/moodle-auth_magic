@@ -5,6 +5,20 @@ bdecentgmbh / moodle-auth_magic
 Changes
 -------
 
+### v1.1.0
+Compatibility: Moodle 5.2 - 5.3
+
+* 2026-11-06 - Compatibility: Moodle 5.2 and 5.3 support (PHP 8.3+)
+* 2026-11-06 - Compatibility: Raised minimum supported Moodle to 5.2
+* 2026-11-06 - Bugfix: Removed stray `use block_mockblock\search\area;` import from login.php
+* 2026-11-06 - Improvement: Fixed PHP 8.2+ dynamic property deprecations in unit tests
+* 2026-11-06 - Improvement: Removed unused imports and dead code
+* 2026-11-06 - Improvement: Switched CI to the Wunderbyte catalyst reusable workflow
+* 2026-11-06 - Compatibility: Updated PHPUnit tests for PHPUnit 11 / PHP 8.4 (coverage attributes, return types, no reset() on object)
+* 2026-11-06 - Bugfix: Magic login button now located by href, fixing passwordless login (and Behat) on Moodle 5.x login page markup
+* 2026-11-06 - Compatibility: Fixed Behat login navigation for Moodle 5.x (navigate directly to the login page)
+* 2026-11-06 - Improvement: Resolved all Moodle coding-style (codechecker) violations
+
 ### v1.0.1 (Release Candidate)
 Compatibility: Moodle 3.9 - 4.3
 

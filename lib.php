@@ -23,8 +23,6 @@
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-use core_user\output\myprofile\tree;
-
 /**
  * Get user login link
  * @param int $userid
@@ -32,7 +30,7 @@ use core_user\output\myprofile\tree;
  */
 function auth_magic_get_user_login_link($userid) {
     global $DB;
-    return $DB->get_field('auth_magic_loginlinks', 'magiclogin', array('userid' => $userid), 'loginurl');
+    return $DB->get_field('auth_magic_loginlinks', 'magiclogin', ['userid' => $userid], 'loginurl');
 }
 
 
@@ -97,7 +95,7 @@ function auth_magic_sent_loginlink_touser($userid, $otherauth = false, $expired 
         $messageplain = get_string('expiredloginlinkmsg', 'auth_magic', $data);
     } else {
         // Check link is expiry and more type.
-        $instance = $DB->get_record('auth_magic_loginlinks', array('userid' => $user->id));
+        $instance = $DB->get_record('auth_magic_loginlinks', ['userid' => $user->id]);
         if ($instance->loginexpiry < time()) {
             $auth->update_new_loginkey($user, $instance);
             auth_magic_sent_loginlink_touser($user->id, $otherauth);
@@ -109,7 +107,6 @@ function auth_magic_sent_loginlink_touser($userid, $otherauth = false, $expired 
     $user->mailformat = 1;  // Always send HTML version as well.
     auth_magic_messagetouser($user, $subject, $messageplain, $messagehtml);
     return true;
-
 }
 
 
@@ -121,7 +118,7 @@ function auth_magic_sent_loginlink_touser($userid, $otherauth = false, $expired 
  */
 function auth_magic_get_user_magic_link_expires($userid, $type) {
     global $DB;
-    $expiry = $DB->get_field('auth_magic_loginlinks', $type,  array('userid' => $userid));
+    $expiry = $DB->get_field('auth_magic_loginlinks', $type, ['userid' => $userid]);
     return $expiry ? auth_magic_expirytime_convert_datestring($expiry) : '';
 }
 
@@ -174,7 +171,7 @@ function auth_magic_get_email_user($email) {
     global $DB;
     $user = $DB->get_record('user', ['email' => $email]);
     if (!$user && get_config('auth_magic', 'loginoption')) {
-        $user = $DB->get_record('user', array('username' => $email));
+        $user = $DB->get_record('user', ['username' => $email]);
     }
     return !empty($user) ? $user : null;
 }

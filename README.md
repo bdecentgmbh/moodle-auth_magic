@@ -4,7 +4,7 @@ Moodle authentication plugin which enables users to login using magic links (ins
 
 # Requirements
 
-This plugin requires Moodle 3.9+
+This plugin requires Moodle 5.2+ and is tested up to Moodle 5.3. Moodle 5.2 and 5.3 require PHP 8.3 or later.
 
 # Motivation for this plugin
 
